@@ -5,7 +5,6 @@ version=3.20.4
 
 url=https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-${version}.tar.gz
 
-petsc_prefix=$HOME/local/petsc
 PETSC_DIR=$HOME/local/petsc
 PETSC_ARCH="linux-opt"
 build_dir=~/local/build/petsc/
@@ -20,7 +19,7 @@ pushd petsc-${version}
 
 ./configure \
   COPTFLAGS="-g -O3" \
-  --prefix=${petsc_prefix} \
+  --prefix=${PETSC_DIR} \
   --with-cc=mpicc \
   --with-cxx=mpicxx \
   --with-fc=mpifort \
@@ -30,7 +29,7 @@ pushd petsc-${version}
   --with-x=0 \
   --download-f2cblaslapack
 
-export PYTHONPATH=${petsc_prefix}/lib
+export PYTHONPATH=${PETSC_DIR}/lib
 make all
 make install
 make PETSC_DIR=${petsc_prefix} PETSC_ARCH="" check

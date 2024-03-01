@@ -13,7 +13,8 @@ mkdir -p ${build_dir}
 pushd ${build_dir}
 
 wget -nc ${url}
-tar xzf hdf5-${version}.tar.gz
+# only extract the tarball if it's not already extracted
+[ -d hdf5-${version} ] || tar xzf hdf5-${version}.tar.gz
 
 pushd hdf5-${version}
 

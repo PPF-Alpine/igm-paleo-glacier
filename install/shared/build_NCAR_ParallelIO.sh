@@ -6,20 +6,16 @@
 netcdf_prefix=~/local/netcdf
 pnetcdf_prefix=~/local/pnetcdf
 
-url=https://github.com/NCAR/ParallelIO.git
-build=~/local/build/parallelio
+version=2_6_2
 prefix=$HOME/local/parallelio
+build_dir=~/local/build/parallelio
+url=https://github.com/NCAR/ParallelIO/archive/refs/tags/pio${version}.tar.gz
 
-rm -rf ${build}
-mkdir -p ${build}/build ${build}/sources
+mkdir -p ${build_dir}
+pushd ${build_dir}
 
-git clone ${url} ${build}/sources
-
-pushd ${build}/sources
-git checkout -b 2_5_7 pio2_5_7
-popd
-
-pushd ${build}/build
+wget -nc ${url}
+tar zxf pio${version}.tar.gz -C ${build_dir} --strip-components 1
 
 CC=mpicc cmake \
   -DCMAKE_C_FLAGS="-fPIC" \
@@ -28,7 +24,7 @@ CC=mpicc cmake \
   -DPnetCDF_PATH=${pnetcdf_prefix} \
   -DPIO_ENABLE_FORTRAN=0 \
   -DPIO_ENABLE_TIMING=0 \
-  ${build}/sources
+  .
 
 make install
 

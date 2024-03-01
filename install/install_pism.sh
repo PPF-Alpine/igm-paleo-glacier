@@ -18,22 +18,22 @@ sudo apt-get install -y \
     libx11-dev
 
 # install petsc
-$(pwd)/build/build_petsc.sh
+$(pwd)/base/build_petsc.sh
 
 # install hdf5
-$(pwd)/build/build_hdf5.sh
+$(pwd)/shared/build_hdf5.sh
 
 # install netcdf
-$(pwd)/build/build_netcdf.sh
+$(pwd)/shared/build_netcdf.sh
 
 # install PnetCDF
-$(pwd)/build/build_PnetCDF.sh
+$(pwd)/shared/build_PnetCDF.sh
 
 # install NCAR ParallelIO
-$(pwd)/build/build_NCAR_ParallelIO.sh
+$(pwd)/shared/build_NCAR_ParallelIO.sh
 
 # install pism
-$(pwd)/build/build_pism.sh
+$(pwd)/base/build_pism.sh
 
 # add petsc to the path
 echo "export PETSC_DIR=$HOME/local/petsc" >> ~/.bashrc
