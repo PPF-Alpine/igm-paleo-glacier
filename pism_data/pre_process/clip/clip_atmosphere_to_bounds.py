@@ -193,9 +193,19 @@ def dev():
         )
 
     # UTM-32 projection, WGS 84 datum
-    crs = "EPSG:32632"
+    crs = "EPSG:32638"
     # west, south, east, north bounds of the alps.
-    bounds = [150e3, 4820e3, 1050e3, 5420e3]
+    bounds = [
+        -52549.60008263553,
+        4495896.221676036,
+        856472.3595563626,
+        4927057.129636544,
+    ]
+
+    # # UTM-32 projection, WGS 84 datum
+    # crs = "EPSG:32632"
+    # # west, south, east, north bounds of the alps.
+    # bounds = [150e3, 4820e3, 1050e3, 5420e3]
 
     ds = create_cliped_atmosphere(
         crs=crs, bounds=bounds, resolution=1000, apply_pbcor=True

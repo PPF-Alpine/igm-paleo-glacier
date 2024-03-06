@@ -3,6 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import urllib.request
 import xarray as xr
+import numpy as np
 
 import logging
 
@@ -13,6 +14,15 @@ EPICA_URL = "ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/antarctica/epica_dom
 
 
 def download_epica(epica_dir: Path):
+    """
+    Download the EPICA data from the NOAA FTP server.
+
+    Parameters:
+        epica_dir (Path): The directory to save the EPICA data.
+    """
+
+    epica_dir.mkdir(parents=True, exist_ok=True)
+
     # Download the csv-like file from the epica endpoint
     # Open the file using urlopen
     logger.info("Downloading EPICA data")
@@ -51,7 +61,9 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     dt = []
     df_index = 12
 
-    for time in tqdm(range(-39, -130000, -1), leave=False):
+    d_t_range = np.arange(-130000, -38)
+
+    for time in tqdm(d_t_range[:-1], leave=False):
         # Check to see if the time is within the range of the current and next time
         if time < df.iloc[df_index + 1]["time"]:
             # If not, increment the index
@@ -64,6 +76,10 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
         delta_T = lower["Temperature"] + (
             upper["Temperature"] - lower["Temperature"]
         ) * (time - lower["time"]) / (upper["time"] - lower["time"])
+
+        # recalculate the delta_T from celsius to kelvin
+        delta_T += 273.15
+
         dt.append(
             {
                 "time": time,
@@ -79,11 +95,17 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
 
     # Create xray Dataset from Pandas DataFrame
     ds = xr.Dataset.from_dataframe(df_dt)
+    # Add attributes to the dataset
+    bounds = np.stack((d_t_range[:-1], d_t_range[1:])).T
+    ds = ds.assign_coords(
+        time=(("time"), d_t_range[:-1]), time_bounds=(("time", "nv"), bounds)
+    )
     ds.time.attrs.update(
-        units="common_years since 1950-1-1",
+        units="365 days since 1950-1-1",
         standard_name="time",
         long_name="Time (years since 1950)",
         calendar="365_day",
+        bounds="time_bounds",
     )
     ds.delta_T.attrs.update(
         units="degC",
