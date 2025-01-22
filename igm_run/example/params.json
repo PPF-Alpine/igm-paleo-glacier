@@ -1,0 +1,24 @@
+{
+  "modules_preproc": [
+    "load_ncdf"
+  ],
+  "modules_process": ["clim_pism",
+                      "smb_pism",
+                      "iceflow",
+                      "time",
+                      "thk",
+                      "vert_flow",
+                      "particles"
+                     ],
+  "modules_postproc": ["write_ncdf",
+                       "print_info",
+                       "print_comp"],
+  "opti_control": ["thk",
+                   "slidingco",
+                   "usurf"],
+  "lncd_input_file": "data/boot.nc",
+  "time_start": -49400.0,
+  "time_end": 1950.0,
+  "time_save": 1.0,
+  "melt_f": 16.64508324444127
+}

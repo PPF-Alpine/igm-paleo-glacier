@@ -159,11 +159,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-pism_data/chelsa/
-pism_data/gebco/
-pism_data/pbcor/
-pism_data/epica/
-pism_data/atm.nc
-pism_data/boot.nc
+glacier_data/chelsa/
+glacier_data/gebco/
+glacier_data/pbcor/
+glacier_data/epica/
+glacier_data/atm.nc
+glacier_data/boot.nc
 
-.personal/
+igm_run/examples/

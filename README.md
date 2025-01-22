@@ -1,25 +1,30 @@
 # paleo-glacier
 Everything related to automated paleo-glacier modelling.
 
-## pism_data
-Holds pism input data downloading and pre-processing.
+## glacier_data
+Holds glacier input data downloading and pre-processing.
 
 ### example run of pre processing python script.
 The first time you run the script, it will download the data from the internet and store it in the pism_data directory.
 The total amount of data is ~18GB, so it will take a while to download.
 From the pism_data repository, run the following command to download and pre-process the data.
 ```bash
-python3 pre_process/pre_process.py
+python3 pre_process.py
 ```
 
 #### example clipping of the Caucasus Mountains
 ```bash
-python3 pre_process/pre_process.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --output_dir caucasus
+python3 pre_process.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --output_dir caucasus
+```
+
+#### example clipping of the Rwenori Mountains
+```bash
+python3 pre_process.py --crs "EPSG:32635" --bounds 778879.15975354 -35049.69269163 884033.3405611  120171.97724387 --output_dir Rwenzori
 ```
 
 #### output of help for pre_process.py
 ```bash
-python3 pre_process/pre_process.py --help
+python3 pre_process.py --help
 ```
 ```
 usage: pre_process.py [-h] [--crs CRS] [--bounds BOUNDS [BOUNDS ...]] [--resolution RESOLUTION]
@@ -45,3 +50,5 @@ options:
   --output_dir OUTPUT_DIR
                         Directory to output the clipped data to
 ```
+
+## IGM run

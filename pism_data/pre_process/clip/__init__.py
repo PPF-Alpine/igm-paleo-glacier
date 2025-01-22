@@ -1,2 +1,0 @@
-from .clip_atmosphere_to_bounds import save_clipped_atmosphere
-from .clip_bootstrap_to_bounds import save_clipped_bootstrap
