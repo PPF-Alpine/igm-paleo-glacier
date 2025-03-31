@@ -8,7 +8,6 @@ import os
 import tensorflow as tf
 import time
 from netCDF4 import Dataset
-from igm.modules.utils import interp1d_tf
 from scipy.interpolate import interp1d
 
 
@@ -27,6 +26,12 @@ def params(parser):
         help="Name of the atmosphere input file for the climate outide the given datatime frame (time, delta_temp, prec_scali)",
     )
     parser.add_argument(
+        "--dt_epica_file",
+        type=str,
+        default="dT_epica.nc",
+        help="Name of the EPICA input file for the climate outside the given datatime frame (time, delta_temp, prec_scali)",
+    )
+    parser.add_argument(
         "--year_0",
         default=1950,
         type=int,
@@ -35,15 +40,14 @@ def params(parser):
     
 
 def initialize(params, state):
-    # load climate data from netcdf file climate_historical.nc
-    nc = Dataset(
+    # load climate data from netcdf file atm.nc
+    atm_nc = Dataset(
         os.path.join("./data/", params.pism_atm_file)
     )
-
-    prcp = np.squeeze(nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2)
-    temp = np.squeeze(nc.variables["air_temp"]).astype("float32")  # unit : degree celcius
-    time_bounds = np.squeeze(nc.variables["time_bounds"]).astype("int")  # unit : bounds for the precipitation and temperature data
-    nc.close()
+    prcp = np.squeeze(atm_nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2)
+    temp = np.squeeze(atm_nc.variables["air_temp"]).astype("float32")  # unit : degree celcius
+    time_bounds = np.squeeze(atm_nc.variables["time_bounds"]).astype("int")  # unit : bounds for the precipitation and temperature data
+    atm_nc.close()
 
     # Set year 0 of the climate data as based on input parameter
     params.yr_0 = params.year_0
@@ -69,13 +73,20 @@ def initialize(params, state):
     state.tlast_clim_oggm = tf.Variable(-(10**10), dtype="float32", trainable=False)
     state.tcomp_clim_oggm = []
 
-    # load the EPICA signal from theparams,state official data
-    ss = np.loadtxt('data/EDC_dD_temp_estim.tab',dtype=np.float32,skiprows=31)
+    # load the EPICA signal from the dT_epica.nc file
+    epica_nc = Dataset(
+        os.path.join("./data/", params.dt_epica_file)
+    )
     # extract time BP, change to AD (1950 is present for EPICA)
-    time = ss[:,1] * -1000 + params.year_0
+    time = np.squeeze(epica_nc.variables["time"]).astype("int")  # unit : years
+    time = time - params.yr_0
     # extract the dT, i.e. global temp. difference
-    dT   = ss[:,3]          
-    state.dT =  interp1d(time,dT, fill_value=(dT[0], dT[-1]), bounds_error=True)
+    dT = np.squeeze(epica_nc.variables["delta_T"]).astype("float32")  # unit : degree Kelvin
+    epica_nc.close()
+
+    # dT is a function of time, we need to interpolate it
+    # to get the dT at the time of the simulation
+    state.dT = lambda t: np.interp(t, time, dT, left=dT[0], right=dT[-1])
 
 
 def update(params, state):

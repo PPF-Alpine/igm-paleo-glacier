@@ -115,7 +115,14 @@ if __name__ == "__main__":
     check_available_files()
 
     # Check the provided arguments
-    args = check_args(parser.parse_args())
+    args = parser.parse_args()
+    # If there are no arguments, print the help message
+    if not args.crs or not args.bounds:
+        parser.print_help()
+        exit(1)
+
+    # Check the provided arguments
+    args = check_args(args)
 
     # Log the provided arguments
     logger.info(f"Clipping data with the following arguments: {args}")

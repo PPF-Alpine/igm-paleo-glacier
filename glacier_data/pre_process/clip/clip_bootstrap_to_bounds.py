@@ -53,7 +53,7 @@ def create_cliped_bootstrap(
     start = perf_counter()
     gebco_da = reproject_data_array(
         # open the data array and set the CRS to WGS84
-        xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.set_crs(
+        xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs(
             "WGS84"
         ),
         crs,

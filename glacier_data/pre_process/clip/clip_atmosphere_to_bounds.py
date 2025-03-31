@@ -147,7 +147,7 @@ def read_pbcor_precipitation(pbcor_path: Path) -> xr.DataArray:
     da = da.rename({"lon": "x", "lat": "y"})
 
     # Fill the missing values with 1.0
-    da = da.fillna(1.0).rio.set_crs("WGS84")
+    da = da.fillna(1.0).rio.write_crs("WGS84")
 
     logger.info(
         f"Read precipitation correction factor from PBCOR in {perf_counter() - start:.2f} seconds"

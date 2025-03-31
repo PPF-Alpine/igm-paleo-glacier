@@ -4,6 +4,19 @@ Everything related to automated paleo-glacier modelling.
 ## glacier_data
 Holds glacier input data downloading and pre-processing.
 
+### Install requirements
+The following command will install the required packages for the pre-processing script.
+
+Pre-requisites:
+- Python 3.10+
+- `pip` (Python package manager)
+- `venv` (optional, but recommended for creating a virtual environment)
+
+Install the required Python packages using `pip`, the requirements can be at found `glacier_data/requirements.txt`, navigate to the `glacier_data` directory and run the following command:
+```bash
+pip install -r requirements.txt
+```
+
 ### example run of pre processing python script.
 The first time you run the script, it will download the data from the internet and store it in the pism_data directory.
 The total amount of data is ~18GB, so it will take a while to download.
@@ -51,4 +64,4 @@ options:
                         Directory to output the clipped data to
 ```
 
-## IGM run
+
