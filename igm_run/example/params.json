@@ -8,14 +8,16 @@
                       "time",
                       "thk",
                       "vert_flow",
-                      "particles"
+                      "particles"                
                      ],
   "modules_postproc": ["write_ncdf",
+	               "write_tif",
+		       "write_ts",
                        "print_info",
                        "print_comp"],
   "lncd_input_file": "data/boot.nc",
-  "time_start": -49400.0,
+  "time_start": -10000,
   "time_end": 1950.0,
-  "time_save": 1.0,
+  "time_save": 1000.0,
   "melt_f": 16.64508324444127
 }

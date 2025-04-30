@@ -159,6 +159,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+glacier_data/bounding_boxes/
 glacier_data/chelsa/
 glacier_data/gebco/
 glacier_data/pbcor/
@@ -166,4 +167,5 @@ glacier_data/epica/
 glacier_data/atm.nc
 glacier_data/boot.nc
 
-igm_run/examples/
+igm_run/*
+!igm_run/example/

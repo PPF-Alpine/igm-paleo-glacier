@@ -3,15 +3,15 @@ from tqdm import tqdm
 from pathlib import Path
 from time import perf_counter
 
-BASE_URL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL"
+BASE_URL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL"      #TODO: This URL is not available any more
 CHELSA_DIR = Path("chelsa")
 
 
 def download_chelsa():
     CHELSA_DIR.mkdir(exist_ok=True)
     # download the temperature and precipitation data
-    download_chelsa_var(dir=CHELSA_DIR, variable="tas")
-    download_chelsa_var(dir=CHELSA_DIR, variable="pr")
+    download_chelsa_var(dir=CHELSA_DIR, variable="tas")             # download temperature
+    download_chelsa_var(dir=CHELSA_DIR, variable="pr")              # download precipitation
     # download the dem data
     download_chelsa_file(dir=CHELSA_DIR, url=f"{BASE_URL}/input/dem_latlong.nc")
 
