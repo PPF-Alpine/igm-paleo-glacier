@@ -3,10 +3,10 @@
 ## Overview
 This project contains the resources necessary for running the world wide IGM Paleo Glacier  model. The [Instructed Glacier Model (IGM)](https://github.com/jouvetg/igm) is a machine learning glacier model that can run very fast on GPU's. Here we use custom modules to download and use paleo-climate data with the IGM model. Required dependencies and installation steps are described in detail below.
 ## Background
-IGM is well suited to grab glacier data from the Randolph Glacier Inventory and adding available climate/mass balance and topography data. This is mostly focused towards recent and  future projections. Here we load paleo data and use them in a custom module:
-   - [**Chelsa**](https://chelsa-climate.org) with [**PBCOR**](https://www.gloh2o.org/pbcor/): Paleo climate data
-   - [**GEBCO**](https://www.gebco.net/): Topography data
-   - [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
+IGM is well suited to grab glacier data from the Randolph Glacier Inventory and adding available climate/mass balance and topography data. This is mostly focused towards recent and  future projections. Here we load paleo data and use them in a custom module:   
+- [**Chelsa**](https://chelsa-climate.org) with [**PBCOR**](https://www.gloh2o.org/pbcor/): Paleo climate data
+- [**GEBCO**](https://www.gebco.net/): Topography data
+- [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
 ## Prerequisites
 - Python 3.10 (>3.11)
 - pip
@@ -14,7 +14,7 @@ IGM is well suited to grab glacier data from the Randolph Glacier Inventory and 
 ## Installation
 The model consists of two parts, *pre-processing* (downloading and processing climate data) and *simulation* (running IGM with the processed climate data).
 
->[!note] This installation process has been tested in WSL (Windows Subsystem for Linux).
+>This installation process has been tested in WSL (Windows Subsystem for Linux).
 ### First time setup 
 The first step is to install the required dependencies. It is recommended to first install Anaconda or an equivalent for environment set up. 
 
@@ -62,7 +62,7 @@ caucasus/
 	│	└── dT_epica.nc
 	├── modules_custom/
 	│   └── ...
-	├──	params.json
+	├── params.json
 	└── paleo_igm.sh
 ```
 
