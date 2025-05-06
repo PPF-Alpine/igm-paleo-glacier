@@ -3,7 +3,7 @@ from tqdm import tqdm
 from pathlib import Path
 from time import perf_counter
 
-BASE_URL = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL"      #TODO: This URL is not available any more
+BASE_URL = "https://os.zhdk.cloud.switch.ch/chelsav2/GLOBAL"
 CHELSA_DIR = Path("chelsa")
 
 
