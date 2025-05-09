@@ -47,7 +47,7 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     """
     logger.info("Reading EPICA data into list.")
     # Read the data into a list
-    data = np.genfromtxt(epica_dir / EPICA_URL.split("/")[-1], skip_header=92, usecols=(2, 4), invalid_raise=False, missing_values=np.nan)
+    data = np.genfromtxt(epica_dir / EPICA_URL.split("/")[-1], skip_header=92, usecols=(2, 4), invalid_raise=False, missing_values=np.nan) #TODO: fix issue with missing values
     # Remove rows with NaN values
     data = data[~np.isnan(data).any(axis=1)]
 

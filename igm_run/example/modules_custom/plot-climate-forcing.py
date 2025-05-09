@@ -9,7 +9,7 @@ from netCDF4 import Dataset
 
 # load the EPICA signal from the dT_epica.nc file
 epica_nc = Dataset(
-    os.path.join("./data/dT_epica.nc")
+    os.path.join("../data/dT_epica.nc")
 )
 # extract time BP, change to AD (1950 is present for EPICA)
 time = np.squeeze(epica_nc.variables["time"]).astype("int")  # unit : years
