@@ -1,5 +1,9 @@
 import argparse
-from pathlib import Path
+from pathlib import Path  
+import geopandas as gpd
+from shapely.geometry import box
+import rasterio
+from rasterio.mask import mask
 
 from pre_process import (
     download_chelsa,
