@@ -11,8 +11,14 @@ from pre_process import (
     download_and_extract_pbcor,
     download_epica,
     epica_to_netcdf,
+    
+    # Regular clipping functions
     save_clipped_atmosphere,
     save_clipped_bootstrap,
+
+    # Polygon clipping functions
+    save_clipped_atmosphere_with_polygon,
+    save_clipped_bootstrap_with_polygon,
 )
 
 import logging
@@ -28,19 +34,39 @@ def clip_data(args: argparse.Namespace):
             epica_dir=Path("epica"),
             output_filepath=(args.output_dir / args.dT_output_filename),
         )
+        
     # Clip the input data
-    save_clipped_atmosphere(
-        crs=args.crs,
-        bounds=args.bounds,
-        output_filepath=(args.output_dir / args.atm_output_filename),
-        resolution=args.resolution,
-    )
-    save_clipped_bootstrap(
-        crs=args.crs,
-        bounds=args.bounds,
-        output_filepath=(args.output_dir / args.boot_output_filename),
-        resolution=args.resolution,
-    )
+    # Determine whether to use polygon clipping or regular bounds clipping
+    if args.polygon_path:
+        # Use the polygon for clipping
+        logger.info(f"Clipping data using polygon from {args.polygon_path}")
+        save_clipped_atmosphere_with_polygon(
+            polygon_path=args.polygon_path,
+            crs=args.crs,
+            output_filepath=(args.output_dir / args.atm_output_filename),
+            resolution=args.resolution,
+        )
+        save_clipped_bootstrap_with_polygon(
+            polygon_path=args.polygon_path,
+            crs=args.crs,
+            output_filepath=(args.output_dir / args.boot_output_filename),
+            resolution=args.resolution,
+        )
+    else:
+        # Use the rectangular bounds (xmin, ymin, xmax, ymax) for clipping
+        logger.info(f"Clipping data using bounds: {args.bounds}")
+        save_clipped_atmosphere(
+            crs=args.crs,
+            bounds=args.bounds,
+            output_filepath=(args.output_dir / args.atm_output_filename),
+            resolution=args.resolution,
+        )
+        save_clipped_bootstrap(
+            crs=args.crs,
+            bounds=args.bounds,
+            output_filepath=(args.output_dir / args.boot_output_filename),
+            resolution=args.resolution,
+        )
 
 
 def check_available_files():
@@ -62,17 +88,22 @@ def check_args(args: argparse.Namespace) -> argparse.Namespace:
     if not args.crs:
         raise ValueError("CRS is required")
 
-    if not args.bounds:
-        raise ValueError("Bounds are required")
-
-    if len(args.bounds) != 4:
-        raise ValueError("Bounds must be in the format: xmin, ymin, xmax, ymax")
+    # Check either bounds or polygon_path is provided
+    if args.polygon_path:
+        if not args.polygon_path.exists():
+            raise ValueError(f"Polygon file does not exist: {args.polygon_path}")
+        logger.info(f"Using polygon file: {args.polygon_path}")
+    elif args.bounds:
+        if len(args.bounds) != 4:
+            raise ValueError("Bounds must be in the format: xmin, ymin, xmax, ymax")
+        logger.info(f"Using bounds: {args.bounds}")
+    else:
+        raise ValueError("Either --bounds or --polygon_path is required")
 
     if args.output_dir.exists() and not args.output_dir.is_dir():
         raise ValueError("Output directory must be a directory")
-
+    
     args.output_dir.mkdir(parents=True, exist_ok=True)
-
     return args
 
 
@@ -115,16 +146,23 @@ if __name__ == "__main__":
         type=Path,
         default=Path("."),
     )
+    parser.add_argument(
+        "--polygon_path",
+        help="Path to the polygon file (shapefile or GeoJSON) for clipping",
+        type=Path,
+        default=None,
+    )  
     # Check if the required files are present
     check_available_files()
 
     # Check the provided arguments
     args = parser.parse_args()
+    
     # If there are no arguments, print the help message
-    if not args.crs or not args.bounds:
+    if not args.crs or (not args.bounds and not args.polygon_path):
         parser.print_help()
         exit(1)
-
+        
     # Check the provided arguments
     args = check_args(args)
 
