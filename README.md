@@ -72,12 +72,18 @@ If the files are located in sub folders, extract them all to  the same `glacer_d
 ### Clipping data for a new region
 You can now download and automatically pre-process climate and topography data for selected regions. Suggested workflow:
 - Create a bounding box in ArcGIS
-- Export its extent in EPSG format
+    - Export its extent in EPSG format
+- Optional: Create a polygon bounding box in ArcGIS to limit the area
+    - Export its shapefiles
 - Process the data with the extent information as described in example below.
-- 
+
 #### Example: The Caucasus mountain range
 ```shell
 python3 pre_process.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --output_dir caucasus
+```
+
+```shell
+python3 pre_process_polygon.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --polygon ./shapefiles/caucasus_eurasia_bounding_polygon.shp --output_dir caucasus
 ```
 
 This will place three files (`atm.nc`, `boot.nc` and `dT_epica.nc`) in a folder named `caucasus/` in the current directory. These Files needs to be moved/copied to the folder with the IGM run file (`params.json`) under a new folder named `data/`. See the `igm_run/example/` folder to get an idea. 
@@ -98,6 +104,9 @@ igm_run/
 ```
 
 A good approach for multiple runs is to copy and rename the `example/` folder for each newly clipped region. Multiple runs on the same region (with new `params.json`) can be automatically handled by running the `paleo_igm.sh` script in place of `igm_run`.
+
+After pre processing with `pre_process.py` or `pre_process_polygon.py` run the `./make_new_simulation_directory.sh` from the run_sripts folder to do all this automatically.
+
 
 ## Running IGM with paleo data
 Before running IGM, it must also be installed ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment is recommended. 
