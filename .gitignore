@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 glacier_data/bounding_boxes/
+glacier_data/shapefiles/
 glacier_data/chelsa/
 glacier_data/gebco/
 glacier_data/pbcor/
