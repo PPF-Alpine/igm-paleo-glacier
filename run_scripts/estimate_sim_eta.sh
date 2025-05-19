@@ -32,17 +32,13 @@ echo ""
 # Get the last line with simulation data (excluding GPU metric lines)
 LAST_LINE=$(grep "IGM [0-9:]" "$LOG_FILE" | tail -n 1)
 
-#echo "DEBUG: LOG_FILE=[$LOG_FILE]"
-#echo "DEBUG: LAST_LINE=[$LAST_LINE]"
 if [ -z "$LAST_LINE" ]; then
     echo "Error: No simulation data found in log file."
     exit 1
 fi
 
 # Extract current simulation year (handling negative years)
-#CURRENT_YEAR=$(echo "$LAST_LINE" | awk '{print $7}' | tr -d '|,')
 CURRENT_YEAR=$(echo "$LAST_LINE" | awk -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}')
-#echo "DEBUG: currentyear=[$CURRENT_YEAR]"
 if [ -z "$CURRENT_YEAR" ]; then
     echo "Error: Could not extract current simulation year."
     exit 1
@@ -86,8 +82,6 @@ echo "- Years remaining: $YEARS_REMAINING"
 # Get last 10 time intervals to calculate average progression rate
 LINES=$(grep "IGM [0-9:]" "$LOG_FILE" | tail -n 10)
 LINES_COUNT=$(echo "$LINES" | wc -l)
-#echo "DEBUG: LINES=[$LINES]"
-#echo "DEBUG: LINES_COUNT=[$LINES_COUNT]"
 
 if [ $LINES_COUNT -lt 2 ]; then
     echo "Not enough data points to estimate completion time."
@@ -101,13 +95,12 @@ TOTAL_HOURS=0
 TOTAL_YEARS=0
 COUNT=0
 
+
 while IFS= read -r line; do
     # Extract timestamp (convert to seconds since midnight)
     TIMESTAMP=$(echo "$line" | awk '{print $2, $3}')
     TIMESTAMP=${TIMESTAMP::-2}
-    #echo "DEBUG: TIMESTAMP=[$TIMESTAMP]"
     TIMESTAMP_SECONDS=$(date -d "$TIMESTAMP" +%s 2>/dev/null) 
-    #echo "DEBUG: TIMESTAMP_SECONDS=[$TIMESTAMP_SECONDS]"
 
     # Skip invalid timestamps
     if [ $? -ne 0 ]; then
@@ -115,13 +108,7 @@ while IFS= read -r line; do
     fi
     
     # Extract year
-    #YEAR=$(echo "$line" | awk '{print $7}' | tr -d '|,')
-    #YEAR=$(echo "$YEAR" | sed 's/[^0-9-]//g')
-
     YEAR=$(echo "$line" | awk -F'|' '{print $2}' | tr -d '[:space:]')
-    #echo "DEBUG: YEAR=[$YEAR]"
-
-
 
     
     if [ -n "$PREV_TIMESTAMP" ] && [ -n "$PREV_YEAR" ]; then
@@ -159,9 +146,13 @@ if [ $COUNT -eq 0 ] || [ $(echo "$TOTAL_YEARS == 0" | bc) -eq 1 ]; then
     exit 1
 fi
 
+TIMESTEP=$(echo "$YEAR_DIFF")
+
 # Calculate rate in hours per simulation year
 RATE=$(echo "scale=4; $TOTAL_HOURS / $TOTAL_YEARS" | bc)
 RATE_MIN=$(echo "$RATE * 60" | bc)
+RATE_PER_TIMESTEP=$(echo "$RATE * $TIMESTEP"| bc)
+RATE_PER_TIMESTEP_MIN=$(echo "$RATE_PER_TIMESTEP * 60" | bc)
 
 # Estimate remaining time
 REMAINING_HOURS=$(echo "scale=2; $RATE * $YEARS_REMAINING" | bc)
@@ -176,20 +167,13 @@ COMPLETION_DATE=$(date -d "@$COMPLETION_TIME" "+%Y-%m-%d %H:%M:%S")
 echo ""
 echo "Estimation based on recent progression:"
 echo "- Average time per simulation year: $RATE hours, ($RATE_MIN minutes)"
+echo "- Average time per simulation step: $RATE_PER_TIMESTEP, hours ($RATE_PER_TIMESTEP_MIN, minutes)"
 echo "- Estimated remaining time: $REMAINING_HOURS hours ($REMAINING_DAYS days)"
 echo "- Estimated completion date: $COMPLETION_DATE"
 
 # Find starting year to calculate progress
 FIRST_LINE=$(grep "IGM [0-9:]" "$LOG_FILE" | head -n 1)
-#echo "DEBUG: FIRST_LINE=[$FIRST_LINE]"
-
-#START_YEAR=$(echo "$FIRST_LINE" | awk '{print $7}' | tr -d '|,')
-
-#echo "DEBUG: START_YEAR=[$START_YEAR]"
-#START_YEAR=$(echo "$START_YEAR" | sed 's/[^0-9-]//g')
-
 START_YEAR=$(echo "$FIRST_LINE" | awk -F'|' '{print $2}' | tr -d '[:space:]')
-#echo "DEBUG: START_YEAR=[$START_YEAR]"
 
 # Calculate progress percentage
 if [[ $START_YEAR == -* ]] && [[ $NUMERIC_YEAR == -* ]]; then
