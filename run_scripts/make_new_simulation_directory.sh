@@ -66,7 +66,7 @@ echo "Setup complete! New simulation directory created at: ${NEW_FOLDER_PATH}"
 echo "Directory structure:"
 echo "- ${NEW_FOLDER_NAME}/"
 echo "  ├── data/         (populated with data from ${DATA_PATH})"
-echo "  ├── modules_custom/ (copied from igm_run)"
-echo "  └── (run scripts copied from run_scripts/)"
+echo "  ├── modules_custom/ (copied from ${BASE_DIR}/modules_custom/)"
+echo "  └── run scripts (copied from ${BASE_DIR}/run_scripts/)"
 
 exit 0
