@@ -18,6 +18,13 @@ The script takes input parameters as command-line aguments:
 python3 ice_thicness_outline_extractor.py --input ../igm_run/simian_small_ethiopia/simian_small_ethiopia_result_1/ --output ./data/ --crs "EPSG:20138"
 ```
 
+## Analysis
+The script `analysis/igm_perfomance_analysis.py` takes a `.xlsx` tabe named in the start of the script and looks for the columns:
+```python
+columns_to_use = ['location', 'area', 'spatial_resolution', 'temporal_resolution', 'simulated_years', 'hours']
+```
+
+Where location is the name of the location, area is the total area in km^3 of the bounding box and hours is the computation time of the simulation. The script perfoms a by variable comarative analysis and outputs plots for each. 
 
 
 
