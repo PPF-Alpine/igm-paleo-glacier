@@ -27,6 +27,7 @@ def save_clipped_atmosphere(
         crs (str): The coordinate reference system of the dataset.
         bounds (list[int]): The bounding box coordinates [xmin, ymin, xmax, ymax].
         output_filepath (Path): The path to save the netCDF file.
+        polygon (.shp): Shape file for clipping further within the bounds.
         resolution (int, optional): The resolution of the clipped dataset. Defaults to 1000.
     """
     # Create xarray and save to netcdf
