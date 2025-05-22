@@ -2,8 +2,8 @@
   "modules_preproc": [
     "load_ncdf"
   ],
-  "modules_process": ["clim_pism",
-                      "smb_pism",
+  "modules_process": ["paleo_clim",
+                      "paleo_smb",
                       "iceflow",
                       "time",
                       "thk",

@@ -2,6 +2,7 @@
 
 # Copyright (C) 2021-2023 Guillaume Jouvet <guillaume.jouvet@unil.ch>
 # Published under the GNU GPL (Version 3), check at the LICENSE file
+# Adapted for paleo climate simulations by Abe Wiersma and Sjur Barndon
 
 import numpy as np
 import os
@@ -14,7 +15,7 @@ from scipy.interpolate import interp1d
 def params(parser):
     # CLIMATE PARAMETERS
     parser.add_argument(
-        "--clim_pism_update_freq",
+        "--clim_pism_update_freq", #TODO: rename this to "paleo_clim_update_freq" 
         type=float,
         default=1,
         help="Update the climate each X years",
