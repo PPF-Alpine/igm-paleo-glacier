@@ -9,6 +9,7 @@ from pre_process import (
     epica_to_netcdf,
     save_clipped_atmosphere,
     save_clipped_bootstrap,
+    save_clipped_lapse_rate,
 )
 
 import logging
@@ -39,7 +40,12 @@ def clip_data(args: argparse.Namespace):
         output_filepath=(args.output_dir / args.boot_output_filename),
         resolution=args.resolution,
     )
-
+    save_clipped_lapse_rate(
+        crs=args.crs,
+        bounds=args.bounds,
+        output_filepath=(args.output_dir / "localised_lapse_rate.txt"),
+        resolution=args.resolution,
+    )
 
 def check_available_files():
     # Check if input data is available
@@ -55,6 +61,8 @@ def check_available_files():
     if not Path("epica").exists():
         download_epica(epica_dir=Path("epica"))
 
+    if not Path("global_lapse_rate").exists():
+        raise Exception("Global lapse rate GeoTiff required")
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:
     if not args.crs:

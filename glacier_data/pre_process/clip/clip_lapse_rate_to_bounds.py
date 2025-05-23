@@ -10,15 +10,14 @@ import geopandas as gpd
 import rasterio
 from rasterio.features import geometry_mask
 
-#from .clip_bounds import reproject_data_array 
-from clip_bounds import reproject_data_array
+from .clip_bounds import reproject_data_array 
 
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-LAPSE_RATE_DIR = Path("../../global_lapse_rate/")
+LAPSE_RATE_DIR = Path("global_lapse_rate")
 LAPSE_RATE_FILE = Path("lapserate_3_iqr_fullrange.tif")
 
 def save_clipped_lapse_rate(crs: str, bounds: list[int], output_filepath: Path, polygon=None, resolution: int = 1000):
@@ -37,7 +36,7 @@ def save_clipped_lapse_rate(crs: str, bounds: list[int], output_filepath: Path, 
 
     local_average = calculate_local_average(clipped_lapse_rate)
     local_average_string = f"{local_average}"
-    with open(output_filepath + "test_local_lapse_rate_average.txt", "w") as file:
+    with open(output_filepath, "w") as file:
         file.write(local_average_string)
     #TODO: this file path might need a tweak or two
 
