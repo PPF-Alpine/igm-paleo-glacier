@@ -43,7 +43,8 @@ def clip_data(args: argparse.Namespace):
     save_clipped_lapse_rate(
         crs=args.crs,
         bounds=args.bounds,
-        output_filepath=(args.output_dir / "localised_lapse_rate.txt"),
+        polygon=args.polygon,
+        output_filepath=(args.output_dir / "localised_lapse_rate"),
         resolution=args.resolution,
     )
 
@@ -61,7 +62,7 @@ def check_available_files():
     if not Path("epica").exists():
         download_epica(epica_dir=Path("epica"))
 
-    if not Path("global_lapse_rate").exists():
+    if not Path("global_lapse_rate").exists(): #TODO: This should actually check if a GeoTiff file is present in stead.
         raise Exception("Global lapse rate GeoTiff required")
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:

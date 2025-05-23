@@ -11,7 +11,7 @@ import rasterio
 from rasterio.features import geometry_mask
 
 from .clip_bounds import reproject_data_array 
-
+from .clip_polygon import make_mask_from_polygon
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -32,11 +32,18 @@ def save_clipped_lapse_rate(crs: str, bounds: list[int], output_filepath: Path, 
     # Create an xarray and save to netCDF
     os.environ["GTIFF_SRS_SOURCE"] = "EPSG"
     clipped_lapse_rate = create_clipped_lapse_rate(crs, bounds, resolution, polygon=polygon)
-    # ds.to_netcdf(output_filepath, encoding={key: {"dtype": "f4"} for key in clipped_lapse_rate.data_vars.keys()}) # Uncomment to save clipped lapse rate as a netcdf file.
 
+    # Create full paths for both files
+    nc_path = output_filepath.with_suffix(".nc")
+    txt_path = output_filepath.with_suffix(".txt")
+
+    clipped_lapse_rate.to_netcdf(
+        nc_path,
+        encoding={"lapse_rate": {"dtype": "f4"}}
+    )
     local_average = calculate_local_average(clipped_lapse_rate)
     local_average_string = f"{local_average}"
-    with open(output_filepath, "w") as file:
+    with open(txt_path, "w") as file:
         file.write(local_average_string)
     #TODO: this file path might need a tweak or two
 
@@ -60,7 +67,13 @@ def create_clipped_lapse_rate(crs: str, bounds: list[int], resolution: int, poly
         bounds,
         resolution,
     )
-    return lapse_rates
+    # Create a mask from the provided polygon shape file:
+    mask = make_mask_from_polygon(crs, lapse_rates, polygon)    
+
+    # Set lapse rate outside the mask to nan:
+    lapse_rates_masked = lapse_rates.where(mask, np.nan)
+
+    return lapse_rates_masked
    
 def read_lapse_rate_data(lapse_rate_dir: Path) -> xr.DataArray:
     """Reads the lapse rate GeoTIFF file"""
