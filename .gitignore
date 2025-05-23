@@ -167,6 +167,7 @@ glacier_data/pbcor/
 glacier_data/epica/
 glacier_data/atm.nc
 glacier_data/boot.nc
+glacier_data/global_lapse_rate/*
 
 igm_run/*
 !igm_run/example/
