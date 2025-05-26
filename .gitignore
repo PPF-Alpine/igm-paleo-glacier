@@ -171,3 +171,6 @@ glacier_data/global_lapse_rate/*
 
 igm_run/*
 !igm_run/example/
+run_scripts/paleo_igm.local.sh 
+run_scripts/paleo_post_interrupt.local.sh 
+

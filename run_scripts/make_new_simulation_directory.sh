@@ -9,6 +9,7 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+    
 # Store arguments
 NEW_FOLDER_NAME="$1"
 DATA_PATH="$2"
@@ -51,12 +52,25 @@ fi
 
 # Copy contents from run_scripts except for this script
 echo "Copying run scripts..."
-for file in "${SCRIPT_DIR}"/*; do
-    # Skip the script itself
-    if [ "$(basename "$file")" != "$(basename "$0")" ]; then
-        cp -r "$file" "$NEW_FOLDER_PATH/"
-    fi
-done
+# for file in "${SCRIPT_DIR}"/*; do
+#     # Skip the script itself
+#     if [ "$(basename "$file")" != "$(basename "$0")" ]; then
+#         cp -r "$file" "$NEW_FOLDER_PATH/"
+#     fi
+# done
+cp "${SCRIPT_DIR}"/params.json "$NEW_FOLDER_PATH/"
+cp "${SCRIPT_DIR}"/estimate_sim_eta.sh "$NEW_FOLDER_PATH/"
+
+# Check for localised verisions of the run scripts and file management:
+if [ -f "${SCRIPT_DIR}/paleo_igm.local.sh" ]; then
+  echo "Copying local versions of run_scripts."
+  cp "${SCRIPT_DIR}"/paleo_igm.local.sh "$NEW_FOLDER_PATH/paleo_igm.sh"
+  cp "${SCRIPT_DIR}"/paleo_post_interrupt.local.sh "$NEW_FOLDER_PATH/paleo_post_interrupt.sh"
+else
+  echo "Copying standard versions of run_scripts."
+  cp "${SCRIPT_DIR}"/paleo_igm.sh "$NEW_FOLDER_PATH/"
+  cp "${SCRIPT_DIR}"/paleo_post_interrupt.sh "$NEW_FOLDER_PATH/"
+fi
 
 # Copy everything from the specified path to the data subfolder
 echo "Copying data from ${DATA_PATH}..."
