@@ -105,7 +105,6 @@ def update(params, state):
                 / (params.thr_temp_rain - params.thr_temp_snow),
             ),
         )
-
         accumulation /= accumulation.shape[
             0
         ]  # unit to [ kg * m^(-2) * y^(-1) ] -> [ kg * m^(-2) water ]
