@@ -2,7 +2,7 @@
 
 # Copyright (C) 2021-2023 Guillaume Jouvet <guillaume.jouvet@unil.ch>
 # Published under the GNU GPL (Version 3), check at the LICENSE file
-# Modified for use with paleo climate input data and lapse rate data, sjurbarndon@proton.me
+# Modified for use with PISM input data by Abe Wiersma
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,12 +18,6 @@ def params(parser):
         type=float,
         default=1,
         help="Update the mass balance each X years ",
-    )
-    parser.add_argument(
-        "--smb_accpdd_refreeze_factor",
-        type=float,
-        default=0.6,
-        help="Refreezing factor",
     )
     parser.add_argument(
         "--smb_oggm_ice_density",
