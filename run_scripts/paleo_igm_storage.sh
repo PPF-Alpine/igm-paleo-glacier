@@ -49,16 +49,19 @@ capture_metrics() {
     echo "[$TIMESTAMP] $GPU_INFO | $CPU_INFO" >> "$log_file"
 }
 
+# Create result_links directory if it doesn't exist
+mkdir -p "result_links"
+
 # Get the name of the current directory
 parent_dir=$(basename "$PWD")
 base_result_folder="${parent_dir}_result"
-result_folder="$base_result_folder"
+result_folder="result_links/$base_result_folder"
 TIF_OUTPUT_FOLDER="output_tif"
 
 # Find a unique folder name
 counter=1
 while [ -d "$result_folder" ]; do
-    result_folder="${base_result_folder}_$counter"
+    result_folder="result_links/${base_result_folder}_$counter"
     ((counter++))
 done
 
@@ -164,8 +167,6 @@ echo "Deleted local result_folder" | tee -a "$log_file"
 ln -s "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" "$result_folder" 
 echo "Created symbolic link to result in local folder" | tee -a "$log_file"
 
-# Create result_links directory if it doesn't exist
-mkdir -p "result_links"
 
 # Move the symlink into the result_links folder
 mv "$result_folder" "result_links/"
