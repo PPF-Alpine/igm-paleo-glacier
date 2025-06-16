@@ -123,6 +123,7 @@ echo "Moved log files into result folder" | tee -a "$log_file"
     [ -f output_ts.nc ] && mv output_ts.nc "$result_folder/" && echo "Moved output_ts.nc" | tee -a "$log_file"
     [ -f computational-pie.png ] && mv computational-pie.png "$result_folder/" && echo "Moved computational-pie.png" | tee -a "$log_file"
     [ -f memory-pie.png ] && mv memory-pie.png "$result_folder/" && echo "Moved memory-pie.png" | tee -a "$log_file"
+    [ -f memory-statistics.txt ] && mv memory-statistics.txt "$result_folder/" && echo "Moved memory-statistics.txt" | tee -a "$log_file"
     [ -f computational-statistics.txt ] && mv computational-statistics.txt "$result_folder/" && echo "Moved computational-statistics.txt" | tee -a "$log_file"
 
     # Move .tif files
