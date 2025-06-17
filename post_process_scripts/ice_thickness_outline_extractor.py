@@ -42,24 +42,65 @@ def extract_year_from_filename(filename):
         return match.group(1)
     return None
 
-def process_tif_file(file_path, output_folder, target_crs=None):
+def is_valid_year_difference(start_year, end_year=1950):
+    """
+    Check if the difference between end_year and start_year is a multiple of 1000.
+    """
+    if start_year is None:
+        return False
+    return (end_year - start_year) % 1000 == 0
+
+def convert_year_to_timestep(year):
+    """Converts the year to time step format for the purpose of naming. e.g.:
+    - ICE0000.shp (present-day: the year 1950) 
+	- ICE0001.shp (100 years ago)
+	- ICE0010.shp (1000 years ago)
+	- ICE0100.shp (10.000 years ago) 
+	- ICE1300.shp (130.000 years ago) 
+
+    This function requires that the data has a start year with a difference to end year being a multiplum of 1000.
+    E.g start year must be -128050 in stead of -130000. 
+    """
+    present_year = 1950
+    time_step_name_format = 0 
+    year = int(year)
+    if year < 0:
+        time_step_name_format = abs(year) + present_year
+    else:
+        time_step_name_format = present_year - year
+
+    timestep_number = time_step_name_format/100
+    return timestep_number
+
+def set_name_with_timestep_format(time_step):
+    """Takes the time_step string and creates a unique name with the timestep format"""
+    time_step = int(time_step)
+    with_leading_zeros = ("{:04d}".format(time_step))
+    time_step_format_new_name = "ICE" + with_leading_zeros
+    return time_step_format_new_name
+
+
+def process_tif_file(file_path, output_folder, input_crs,  target_crs):
     """
     Process a single GeoTIFF file to extract ice thickness outlines.
     
     Args:
         file_path: Path to the GeoTIFF file
         output_folder: Folder where to save the output shapefile
+        input_crs: Source CRS from the data files.
         target_crs: Target CRS for the output shapefile. If None, use the CRS from the input file
     """
     # Extract the base filename and year
     base_name = os.path.basename(file_path)
-    year_str = extract_year_from_filename(base_name)
-    
-    if not year_str:
+    year_string = extract_year_from_filename(base_name)
+    time_step_string = convert_year_to_timestep(year_string)
+    new_name = set_name_with_timestep_format(time_step_string)
+
+    if not year_string:
         print(f"Couldn't extract year from {base_name}. Skipping...")
         return
     
-    print(f"Processing {base_name} (Year: {year_str})...")
+    print(f"Processing {base_name} (Year: {year_string})...")
     
     # Open the raster file
     with rasterio.open(file_path) as src:
@@ -83,25 +124,42 @@ def process_tif_file(file_path, output_folder, target_crs=None):
             print(f"No ice found in {base_name}. Skipping...")
             return
         
-        # Get CRS from either the source file or the specified target CRS
-        crs = target_crs if target_crs else src.crs
-        
         # Create a GeoDataFrame with the geometries
         gdf = gpd.GeoDataFrame({
             'geometry': geometries,
-            'year': year_str
-        }, crs=crs)
+            'year': year_string
+        }, crs=input_crs)
         
-        # Reproject if target_crs is specified and different from source CRS
-        if target_crs and src.crs and src.crs != target_crs:
-            print(f"Reprojecting from {src.crs} to {target_crs}")
+        # Reproject to target_crs if specified and different from source src
+        if target_crs and (target_crs != input_crs):
+            print(f"Reprojecting from {input_crs} to {target_crs}...")
             gdf = gdf.to_crs(target_crs)
+
+
+        # Clean geometries BEFORE dissolving
+        print("Cleaning geometries...")
         
-        # Dissolve to get a single outline
-        gdf_dissolved = gdf.dissolve(by='year')
+        # Fix invalid geometries
+        gdf['geometry'] = gdf.geometry.buffer(0)
+
+        # Remove tiny slivers that cause artifacts
+        gdf = gdf[gdf.geometry.area > 1e-10]  # Adjust threshold as needed
+
+        # Use unary_union instead of dissolve for cleaner results
+        print("Creating clean union...")
+        clean_union = gdf.geometry.unary_union
+
+         # Create result GeoDataFrame
+        gdf_dissolved = gpd.GeoDataFrame({
+            'year': [year_string],
+            'geometry': [clean_union]
+        }, crs=gdf.crs)
+
+        # Final cleanup - this often removes internal artifacts
+        gdf_dissolved['geometry'] = gdf_dissolved.geometry.buffer(0.001).buffer(-0.001)
         
         # Create output filename
-        output_filename = f"ice_outline_{year_str}.shp"
+        output_filename = new_name + ".shp"
         output_path = os.path.join(output_folder, output_filename)
         
         # Save as shapefile, explicitly setting the CRS
@@ -111,9 +169,10 @@ def process_tif_file(file_path, output_folder, target_crs=None):
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Extract ice thickness outlines from GeoTIFF files.')
-    parser.add_argument('-i', '--input', required=True, help='Input folder containing thk-*.tif files')
-    parser.add_argument('-o', '--output', help='Output folder for shapefiles (defaults to input folder if not specified)')
-    parser.add_argument('-c', '--crs', help='Target CRS for output shapefiles (e.g., "EPSG:3413")')
+    parser.add_argument('-i', '--input_folder', required=True, help='Input folder containing thk-*.tif files')
+    parser.add_argument('-o', '--output_folder', help='Output folder for shapefiles (defaults to input folder if not specified)')
+    parser.add_argument('-c', '--input_crs', required=True, help='Input CRS for data (e.g., "EPSG:3413")')
+    parser.add_argument('-t', '--target_crs', required=True, help='Target CRS for output shapefiles (e.g., "EPSG:3413")')
     
     return parser.parse_args()
 
@@ -121,9 +180,10 @@ def main():
     # Parse command line arguments
     args = parse_arguments()
     
-    input_folder = args.input
-    output_folder = args.output if args.output else input_folder
-    target_crs = args.crs
+    input_folder = args.input_folder
+    output_folder = args.output_folder if args.output_folder else input_folder
+    input_crs = args.input_crs
+    target_crs = args.target_crs
     
     # Validate input folder
     if not os.path.isdir(input_folder):
@@ -148,7 +208,7 @@ def main():
     
     # Process each file
     for file_path in files:
-        process_tif_file(file_path, output_folder, target_crs)
+        process_tif_file(file_path, output_folder, input_crs, target_crs)
     
     print("Processing complete!")
 
