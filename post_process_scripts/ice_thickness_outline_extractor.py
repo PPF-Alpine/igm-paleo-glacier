@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Ice Thickness Outline Extractor
+Ice Thickness Outline Extractor Version 2 (Testing)
 
 This script processes ice thickness GeoTIFF files (thk-*.tif) in a specified folder,
 extracts outlines where ice exists (non-zero values), and saves them as shapefiles
@@ -73,14 +73,14 @@ def convert_year_to_timestep(year):
     return timestep_number
 
 def set_name_with_timestep_format(time_step):
-    """Takes the time_step string and creates a unique name with the timestep format"""
+    """Takes the time_step string and creates a unique name with the timestep format: ICE0010"""
     time_step = int(time_step)
     with_leading_zeros = ("{:04d}".format(time_step))
     time_step_format_new_name = "ICE" + with_leading_zeros
     return time_step_format_new_name
 
 
-def process_tif_file(file_path, output_folder, input_crs,  target_crs):
+def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_crs="EPSG:4326"):
     """
     Process a single GeoTIFF file to extract ice thickness outlines.
     
@@ -103,76 +103,59 @@ def process_tif_file(file_path, output_folder, input_crs,  target_crs):
     print(f"Processing {base_name} (Year: {year_string})...")
     
     # Open the raster file
-    with rasterio.open(file_path) as src:
+    with rasterio.open(file_path) as raster_file:
         # Read the data
-        raster_data = src.read(1)
+        raster_data = raster_file.read(1)
         
-        # Create a mask where ice thickness > 0
-        mask = raster_data > 0
+        # Create a mask where ice thickness > threshold value
+        print(f"Processing raster file with the ice thinckness threshold of {threshold}")
+        ice_mask = (raster_data > threshold) & (raster_data != raster_file.nodata)
+
+        # Use the original data values, but set areas below threshold to 0
+        masked_data = np.where(ice_mask, raster_data, 0)
 
         # Get the shapes of areas where ice exists
         shapes = features.shapes(
-            raster_data.astype(np.int16), 
-            mask=mask, 
-            transform=src.transform
+            source=ice_mask.astype(np.uint8), 
+            mask=ice_mask, 
+            transform=raster_file.transform,
+            connectivity=4
         )
         
-        # Convert the shapes to geometries
-        geometries = [shape(geometry) for geometry, value in shapes]
+        # Convert the shapes to geometries (Only if ice is present - checking if value is 1)
+        geometries = [shape(geometry) for geometry, value in shapes if value == 1]
         
         if not geometries:
             print(f"No ice found in {base_name}. Skipping...")
             return
         
-        # Create a GeoDataFrame with the geometries
-        gdf = gpd.GeoDataFrame({
-            'geometry': geometries,
-            'year': year_string
-        }, crs=input_crs)
-        
-        # Reproject to target_crs if specified and different from source src
-        if target_crs and (target_crs != input_crs):
-            print(f"Reprojecting from {input_crs} to {target_crs}...")
-            gdf = gdf.to_crs(target_crs)
+    # Create a GeoDataFrame with the geometries
+    gdf = gpd.GeoDataFrame({
+        'geometry': geometries,
+        'year': year_string
+    }, crs=input_crs)
+    
+    # Reproject to target_crs if specified and different from source
+    if target_crs and (target_crs != input_crs):
+        print(f"Reprojecting from {input_crs} to {target_crs}...")
+        gdf = gdf.to_crs(target_crs)
 
-
-        # Clean geometries BEFORE dissolving
-        print("Cleaning geometries...")
-        
-        # Fix invalid geometries
-        gdf['geometry'] = gdf.geometry.buffer(0)
-
-        # Remove tiny slivers that cause artifacts
-        gdf = gdf[gdf.geometry.area > 1e-10]  # Adjust threshold as needed
-
-        # Use unary_union instead of dissolve for cleaner results
-        print("Creating clean union...")
-        clean_union = gdf.geometry.unary_union
-
-         # Create result GeoDataFrame
-        gdf_dissolved = gpd.GeoDataFrame({
-            'year': [year_string],
-            'geometry': [clean_union]
-        }, crs=gdf.crs)
-
-        # Final cleanup - this often removes internal artifacts
-        gdf_dissolved['geometry'] = gdf_dissolved.geometry.buffer(0.001).buffer(-0.001)
-        
-        # Create output filename
-        output_filename = new_name + ".shp"
-        output_path = os.path.join(output_folder, output_filename)
-        
-        # Save as shapefile, explicitly setting the CRS
-        gdf_dissolved.to_file(output_path, driver="ESRI Shapefile")
-        print(f"Saved outline to {output_path} with CRS: {gdf_dissolved.crs}")
+    # Create output filename
+    output_filename = new_name + ".shp"
+    output_path = os.path.join(output_folder, output_filename)
+    
+    # Save as shapefile, explicitly setting the CRS
+    gdf.to_file(output_path, driver="ESRI Shapefile")
+    print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
 
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Extract ice thickness outlines from GeoTIFF files.')
     parser.add_argument('-i', '--input_folder', required=True, help='Input folder containing thk-*.tif files')
     parser.add_argument('-o', '--output_folder', help='Output folder for shapefiles (defaults to input folder if not specified)')
-    parser.add_argument('-c', '--input_crs', required=True, help='Input CRS for data (e.g., "EPSG:3413")')
-    parser.add_argument('-t', '--target_crs', required=True, help='Target CRS for output shapefiles (e.g., "EPSG:3413")')
+    parser.add_argument('-c', '--input_crs', required=True, help='Input CRS for data (e.g., "EPSG:32638")')
+    parser.add_argument('-t', '--threshold', type=float, help='Threshold value to remove low ice thickness values')
+    parser.add_argument('-r', '--target_crs', help='Target CRS for output shapefiles (default "EPSG:4326")')
     
     return parser.parse_args()
 
@@ -183,6 +166,7 @@ def main():
     input_folder = args.input_folder
     output_folder = args.output_folder if args.output_folder else input_folder
     input_crs = args.input_crs
+    threshold = float(args.threshold) if args.threshold is not None else 2
     target_crs = args.target_crs
     
     # Validate input folder
@@ -208,7 +192,7 @@ def main():
     
     # Process each file
     for file_path in files:
-        process_tif_file(file_path, output_folder, input_crs, target_crs)
+        process_tif_file(file_path, output_folder, input_crs, threshold=threshold, target_crs=target_crs)
     
     print("Processing complete!")
 
