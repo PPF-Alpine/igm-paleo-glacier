@@ -51,7 +51,7 @@ def params(parser):
         "--temp_default_gradient",
         type=float,
         default=-0.0065,
-        help="Default temperature gradient or lapse rate (based on Schuster et al., 2023), unit: K/km",
+        help="Default temperature gradient or lapse rate in K/m (based on Schuster et al., 2023 - taken from OGGM reference: -6.5 K/km)",
     )
 
     # Melt factors for snow and ice
