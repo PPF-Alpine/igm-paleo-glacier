@@ -91,6 +91,14 @@ def check_args(args: argparse.Namespace) -> argparse.Namespace:
 
     return args
 
+def save_projection(args: argparse.Namespace):
+    save_path = args.output_dir
+    file_name = "projection.txt"
+    complete_name = Path(save_path) / file_name
+    file1 = open(complete_name, "w")
+    file1.write(args.crs) 
+    file1.close()
+    
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -157,3 +165,6 @@ if __name__ == "__main__":
 
     # # Call the clip_data function with the provided arguments
     clip_data(args=args)
+
+    # Save projection for later automation with shape file result generation
+    save_projection(args=args)

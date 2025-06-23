@@ -51,7 +51,7 @@ def params(parser):
         "--temp_default_gradient",
         type=float,
         default=-0.0065,
-        help="Default temperature gradient or lapse rate in K/m (based on Schuster et al., 2023 - taken from OGGM reference: -6.5 K/km)",
+        help="Default temperature gradient or lapse rate (based on Schuster et al., 2023), unit: K/km",
     )
 
     # Melt factors for snow and ice
@@ -156,7 +156,7 @@ def update(params, state):
                         < snow_depth,
                         pos_temp_year[k] * params.smb_accpdd_melt_factor_snow,
                         snow_depth + ( pos_temp_year[k] - snow_depth 
-                        uu/ params.smb_accpdd_melt_factor_snow) * params.smb_accpdd_melt_factor_ice,
+                        / params.smb_accpdd_melt_factor_snow) * params.smb_accpdd_melt_factor_ice,
                     ),
                 )
             )
@@ -165,6 +165,8 @@ def update(params, state):
             snow_depth = tf.clip_by_value(snow_depth - ablation[-1], 0.0, 1.0e10)
 
 
+
+        ablation = (1 - params.smb_accpdd_refreeze_factor) * tf.stack(ablation, axis=0)
 
         # sum accumulation and ablation over the year, and conversion to ice equivalent
         state.smb = tf.math.reduce_sum(accumulation - ablation, axis=0) * (

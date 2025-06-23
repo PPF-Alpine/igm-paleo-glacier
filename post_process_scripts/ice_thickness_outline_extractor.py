@@ -134,6 +134,14 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
         'geometry': geometries,
         'year': year_string
     }, crs=input_crs)
+
+    gdf['area_m2'] = gdf.geometry.area
+    gdf['area_km2'] = gdf['area_m2'] / 1e6  # Convert to square kilometers
+
+    total_area_m2 = gdf['area_m2'].sum()
+    total_area_km2 = gdf['area_km2'].sum()
+    print(f"Total area of ice extent is {total_area_m2} m^2 and {total_area_km2} km^2")
+    gdf = gdf.drop(columns=['area_m2'])
     
     # Reproject to target_crs if specified and different from source
     if target_crs and (target_crs != input_crs):
@@ -193,6 +201,7 @@ def main():
     # Process each file
     for file_path in files:
         process_tif_file(file_path, output_folder, input_crs, threshold=threshold, target_crs=target_crs)
+        print(" ")
     
     print("Processing complete!")
 

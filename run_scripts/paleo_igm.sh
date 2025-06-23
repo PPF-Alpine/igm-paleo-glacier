@@ -2,6 +2,7 @@
 
 # This script will run the `igm_run` command, measure time, and log output in a igm_run_log.txt file.
 # It will also create a unique result folder based on the current directory name.
+# This is my local file that i need for moving data to a larger storage after a successful run.
 # - sjurbarndon@proton.me
 
 set -e  # Exit on any command failure
@@ -12,6 +13,13 @@ CAPTURE_AT_TIMESTEPS=true
 # Set interval in seconds for regular metric collection (used if CAPTURE_AT_TIMESTEPS=false)
 METRICS_INTERVAL=60*10  # 10 minutes
 
+# Set backup to external storeage
+SYNC_TO_INTERNAL_BACKUP=true
+SYNC_TO_EXTERNAL_BACKUP=true
+
+# Set paths for post run storage and backup
+INTERNAL_STORAGE_PATH="$HOME/internal/paleo_results"
+EXTERNAL_STORAGE_PATH="$HOME/external/paleo_igm_result_backup"
 
 # --- HELPER FUNCTIONS ---
 # Function to get GPU metrics (using nvidia-smi)
@@ -46,14 +54,19 @@ capture_metrics() {
 # Get the name of the current directory
 parent_dir=$(basename "$PWD")
 base_result_folder="${parent_dir}_result"
-result_folder="$base_result_folder"
+result_folder="result_links/$base_result_folder"
+TIF_OUTPUT_FOLDER="output_tif"
+
+# Create result_links directory if it doesn't exist
+mkdir -p "result_links"
 
 # Find a unique folder name
 counter=1
 while [ -d "$result_folder" ]; do
-    result_folder="${base_result_folder}_$counter"
+    result_folder="result_links/${base_result_folder}_$counter"
     ((counter++))
 done
+
 
 # Set log file name based on result folder name
 log_file="${result_folder}.log"
@@ -115,6 +128,7 @@ mv "$log_file" "$result_folder/"
 mv "$metrics_log" "$result_folder/"
 log_file="$result_folder/$(basename "$log_file")"  # Update path for continued logging
 echo "Moved log files into result folder" | tee -a "$log_file"
+mkdir "$result_folder/$TIF_OUTPUT_FOLDER"
 
 # Move/copy output files
 {   [ -f params.json ] && cp params.json "$result_folder/" && echo "Copied params.json"  | tee -a "$log_file"
@@ -123,19 +137,56 @@ echo "Moved log files into result folder" | tee -a "$log_file"
     [ -f output_ts.nc ] && mv output_ts.nc "$result_folder/" && echo "Moved output_ts.nc" | tee -a "$log_file"
     [ -f computational-pie.png ] && mv computational-pie.png "$result_folder/" && echo "Moved computational-pie.png" | tee -a "$log_file"
     [ -f memory-pie.png ] && mv memory-pie.png "$result_folder/" && echo "Moved memory-pie.png" | tee -a "$log_file"
-    [ -f memory-statistics.txt ] && mv memory-statistics.txt "$result_folder/" && echo "Moved memory-statistics.txt" | tee -a "$log_file"
     [ -f computational-statistics.txt ] && mv computational-statistics.txt "$result_folder/" && echo "Moved computational-statistics.txt" | tee -a "$log_file"
 
     # Move .tif files
     tif_files_found=$(find . -maxdepth 1 -type f -name "*.tif")
     if [ -n "$tif_files_found" ]; then
-        find . -maxdepth 1 -type f -name "*.tif" -exec mv {} "$result_folder/" \;
+        find . -maxdepth 1 -type f -name "*.tif" -exec mv {} "$result_folder/$TIF_OUTPUT_FOLDER/" \;
         echo "Moved all .tif files to $result_folder/" | tee -a "$log_file"
     else
         echo "No .tif files found to move." | tee -a "$log_file"
     fi
 } || echo "Some files were not found or could not be moved." | tee -a "$log_file"
 
+
+# Run post-processing, creating tiff outline shape file_transfer
+mkdir -p "$result_folder/ice_extent_shape_files"
+projection_file=$(cat "data/projection.txt")
+echo "The projection file reads $projection_file"
+python3 ../../../post_process_scripts/ice_thickness_outline_extractor.py -i "$result_folder/$TIF_OUTPUT_FOLDER" -o "$result_folder/ice_extent_shape_files" -c "$projection_file" -r "EPSG:4326" 
+
+# Backup all the data to external storage. 
+if [ SYNC_TO_EXTERNAL_BACKUP ]; then
+    mkdir -p "$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+    rsync -vharP --log-file="$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/backup_progress.log" "$result_folder/" "$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+
+
+else 
+    echo "No external backup sync was performed."
+fi
+
+if [ SYNC_TO_INTERNAL_BACKUP ]; then
+    # Move result folder to internal storage and create a symlink for easy access
+    mkdir -p "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+    rsync -vharP --log-file="$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/file_transfer.log" "$result_folder/" "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+
+    log_file="$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/$result_folder.log"  # Update path for continued logging
+    echo "Copied (rsync) files to interal storage:  $INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" | tee -a "$log_file"
+
+    rm -rf "$result_folder"
+    echo "Deleted local result_folder" | tee -a "$log_file"
+
+    ln -s "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" "$result_folder" 
+    echo "Created symbolic link to result in local folder" | tee -a "$log_file"
+
+
+    # Move the symlink into the result_links folder
+    mv "$result_folder" "result_links/"
+
+else
+  echo "No internal backup and symlink setup was performed."
+fi
 
 echo "All post-run steps completed." | tee -a "$log_file"
 echo "Resource usage metrics are available in: $result_folder/$(basename "$metrics_log")" | tee -a "$log_file"

@@ -96,8 +96,10 @@ def read_lapse_rate_data(lapse_rate_dir: Path) -> xr.DataArray:
 
 def calculate_local_average(lapse_rates_array: xr.DataArray) -> int:
     local_average = lapse_rates_array.mean(skipna=True).item()
-    print(f"local average calculated as: {local_average}")
-    return local_average
+    print(f"local average calculated as: {local_average} K/km")
+    local_average_in_k_per_m  = local_average/1000
+    print(f"local average per meter: {local_average_in_k_per_m} K/m")
+    return local_average_in_k_per_m
 
 def dev():
     """Development function to test clipping lapse rate dataset."""

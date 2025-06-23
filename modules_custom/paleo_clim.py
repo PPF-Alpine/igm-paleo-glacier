@@ -38,7 +38,18 @@ def params(parser):
         type=int,
         help="Year 0 of the climate data",
     )
-    
+    parser.add_argument(
+        "--precipitation_scaling",
+        type=float,
+        default=1.0,
+        help="Scaling factor for precipitation (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
+    )
+    parser.add_argument(
+        "--temperature_scaling",
+        type=float,
+        default=1.0,
+        help="Scaling factor for temperature (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
+    )    
 
 def initialize(params, state):
     # load climate data from netcdf file atm.nc
@@ -54,20 +65,19 @@ def initialize(params, state):
     params.yr_0 = params.year_0
 
     # Add the temperature data to the state
-    state.temp = temp
+    state.temp = temp * params.temperature_scaling
 
     # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * day^(-1)
-    state.prec = prcp * time_bounds.max()
+    state.prec = prcp * time_bounds.max() * params.precipitation_scaling
 
-    # number of months
-    nb_m = 12
     # intitalize air_temp and precipitation fields
+    number_months = 12
     state.air_temp = tf.Variable(
-        tf.zeros((nb_m, state.y.shape[0], state.x.shape[0])),
+        tf.zeros((number_months, state.y.shape[0], state.x.shape[0])),
         dtype="float32", trainable=False
     )
     state.precipitation = tf.Variable(
-        tf.zeros((nb_m, state.y.shape[0], state.x.shape[0])),
+        tf.zeros((number_months, state.y.shape[0], state.x.shape[0])),
         dtype="float32", trainable=False
     )
 
