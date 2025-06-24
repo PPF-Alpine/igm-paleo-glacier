@@ -2,24 +2,21 @@ from pathlib import Path
 import xarray as xr
 from time import perf_counter
 
-from .clip_bounds import reproject_data_array
-
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-GEBCO_PATH = Path("gebco/GEBCO_2023_sub_ice_topo.nc")
+GEBCO_PATH = Path("../../gebco/GEBCO_2023_sub_ice_topo.nc")
 
 
 def save_clipped_bootstrap(
-    crs: str, bounds: list[int], output_filepath: Path, resolution: int = 1000
+    bounds: list[float], output_filepath: Path, resolution: int = 1000
 ):
     """Create and save a clipped bootstrap dataset to a netCDF file.
     Clips from the GEBCO dataset as found at gebco/GEBCO_2023_sub_ice_topo.nc
 
     Parameters:
-        crs (str): The target CRS to reproject the data array to.
         bounds (list[int]): The bounding box coordinates [west, south, east, north]
             to clip the data array to.
         output_filepath (Path): The path to save the netCDF file to.
@@ -28,20 +25,19 @@ def save_clipped_bootstrap(
     # Create xarray and save to netcdf
 
     xr.Dataset(
-        {"topg": create_cliped_bootstrap(GEBCO_PATH, crs, bounds, resolution)}
+        {"topg": create_cliped_bootstrap(GEBCO_PATH, bounds, output_filepath, resolution)}
     ).to_netcdf(
         output_filepath,
     )
 
 
 def create_cliped_bootstrap(
-    gebco_path: Path, crs: str, bounds: list[int], resolution: int
+    gebco_path: Path, bounds: list[float], outputh_filepath, resolution: int
 ):
     """Create a clipped version of the GEBCO dataset.
 
     Parameters:
         gebco_path (Path): The path to the GEBCO dataset.
-        crs (str): The target CRS to reproject the data array to.
         bounds (list[int]): The bounding box coordinates [west, south, east, north]
             to clip the data array to.
         resolution (int): The resolution of the output data array.
@@ -51,41 +47,32 @@ def create_cliped_bootstrap(
     """
 
     start = perf_counter()
-    gebco_da = reproject_data_array(
-        # open the data array and set the CRS to WGS84
-        xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs(
-            "WGS84"
-        ),
-        crs,
-        bounds,
-        resolution,
+    gebco_da = xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs( "WGS84")
+    logger.info(f"Original GEBCO data size: {gebco_da.shape}") 
+    # Extract bounds
+    west, south, east, north = bounds
+
+    logger.info(f"bounds are {bounds}")
+    logger.info(f"west south east north are {west}, {south}, {east}, {north}")
+    # Clip the data array using coordinate selection
+    # Assuming the coordinate names are 'lon' and 'lat' (adjust if different)
+    clipped_da = gebco_da.sel(
+        lon=slice(west, east),
+        lat=slice(south, north)
     )
+    logger.info(f"Clipped GEBCO data size: {clipped_da.shape}")
     gebco_da.attrs.update(standard_name="bedrock_altitude")
+
     logger.info(
         f"Loading and clipping GEBCO took {perf_counter() - start:.2f} seconds."
     )
-    return gebco_da
+    return clipped_da
 
 
 def dev():
-    # UTM-32 projection, WGS 84 datum
-    crs = "EPSG:32632"
-    # west, south, east, north bounds of the alps.
-    bounds = [150e3, 4820e3, 1050e3, 5420e3]
-
-    gebco_dir = Path("gebco")
-    if not gebco_dir.exists():
-        raise FileNotFoundError(
-            "GEBCO directory not found. Please download the data first."
-        )
-    gebco_path = gebco_dir / "GEBCO_2023_sub_ice_topo.nc"
-    gebco_da = create_cliped_bootstrap(gebco_path, crs, bounds, 1000)
-
-    ds = xr.Dataset({"bedrock": gebco_da})
-    # save to netcdf with float dtypes for all keys.
-    ds.to_netcdf(
-        "bootstrap.nc",
-    )
+    bounds = [-74.507665, 9.180996, -71.911844, 11.570751]
+    output_path = Path("./test_topography.nc")
+    save_clipped_bootstrap(bounds, output_path, 1000)
 
 
 if __name__ == "__main__":
