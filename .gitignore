@@ -177,3 +177,7 @@ run_scripts/paleo_post_interrupt.local.sh
 post_process_scripts/*
 !post_process_scripts/ice_thickness_outline_extractor.py
 !post_process_scripts/README.md
+
+glacier_data/bounding_boxes_old
+glacier_data/shapefiles_old
+
