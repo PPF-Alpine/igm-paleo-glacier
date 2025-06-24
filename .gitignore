@@ -174,3 +174,6 @@ igm_run/*
 run_scripts/paleo_igm.local.sh 
 run_scripts/paleo_post_interrupt.local.sh 
 
+post_process_scripts/*
+!post_process_scripts/ice_thickness_outline_extractor.py
+!post_process_scripts/README.md
