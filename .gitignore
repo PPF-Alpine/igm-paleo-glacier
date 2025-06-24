@@ -181,3 +181,4 @@ post_process_scripts/*
 glacier_data/bounding_boxes_old
 glacier_data/shapefiles_old
 
+epica/

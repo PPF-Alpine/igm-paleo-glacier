@@ -74,4 +74,4 @@ def epica_to_yearly_csv(epica_dir: Path):
     np.savetxt(epica_dir / "epica_data_1000.csv", dt[::1000], fmt='%d,%.6f', delimiter=",", header="time,delta_T", comments='')
 
 if __name__ == "__main__":
-    epica_to_yearly_csv(Path("./epica"))
+    epica_to_yearly_csv(Path("./epica")) 
