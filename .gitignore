@@ -169,6 +169,20 @@ glacier_data/atm.nc
 glacier_data/boot.nc
 glacier_data/global_lapse_rate/*
 
+# Ignore files in glacier_data/climate_model_outputs/ but keep directory structure
+glacier_data/climate_model_outputs/*
+
+# Keep subdirectories within climate_model_outputs/
+!glacier_data/climate_model_outputs/*/
+
+# Ignore all files within the subdirectories
+glacier_data/climate_model_outputs/*/*
+
+# But include .sh scripts in the subdirectories
+!glacier_data/climate_model_outputs/*/*.sh
+
+glacier_data/core_composites/*
+
 igm_run/*
 !igm_run/example/
 run_scripts/paleo_igm.local.sh 
