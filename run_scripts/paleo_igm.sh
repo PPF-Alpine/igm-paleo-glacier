@@ -1,4 +1,4 @@
-#!/bin/bash
+#DATA_PATH!/bin/bash
 
 # This script will run the `igm_run` command, measure time, and log output in a igm_run_log.txt file.
 # It will also create a unique result folder based on the current directory name.
@@ -55,6 +55,7 @@ capture_metrics() {
 parent_dir=$(basename "$PWD")
 base_result_folder="${parent_dir}_result"
 result_folder="result_links/$base_result_folder"
+remote_result_folder="$base_result_folder"
 TIF_OUTPUT_FOLDER="output_tif"
 
 # Create result_links directory if it doesn't exist
@@ -64,6 +65,7 @@ mkdir -p "result_links"
 counter=1
 while [ -d "$result_folder" ]; do
     result_folder="result_links/${base_result_folder}_$counter"
+    remote_result_folder="${base_result_folder}_$counter"
     ((counter++))
 done
 
@@ -154,12 +156,14 @@ mkdir "$result_folder/$TIF_OUTPUT_FOLDER"
 mkdir -p "$result_folder/ice_extent_shape_files"
 projection_file=$(cat "data/projection.txt")
 echo "The projection file reads $projection_file"
-python3 ../../../post_process_scripts/ice_thickness_outline_extractor.py -i "$result_folder/$TIF_OUTPUT_FOLDER" -o "$result_folder/ice_extent_shape_files" -c "$projection_file" -r "EPSG:4326" 
+python3 post_process_scripts/ice_thickness_outline_extractor.py -i "$result_folder/$TIF_OUTPUT_FOLDER" -o "$result_folder/ice_extent_shape_files" -c "$projection_file" -r "EPSG:4326" 
+
+
 
 # Backup all the data to external storage. 
 if [ SYNC_TO_EXTERNAL_BACKUP ]; then
-    mkdir -p "$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
-    rsync -vharP --log-file="$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/backup_progress.log" "$result_folder/" "$EXTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+    mkdir -p "$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
+    rsync -vharP --log-file="$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/backup_progress.log" "$result_folder/" "$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
 
 
 else 
@@ -168,16 +172,16 @@ fi
 
 if [ SYNC_TO_INTERNAL_BACKUP ]; then
     # Move result folder to internal storage and create a symlink for easy access
-    mkdir -p "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
-    rsync -vharP --log-file="$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/file_transfer.log" "$result_folder/" "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder"
+    mkdir -p "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
+    rsync -vharP --log-file="$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/file_transfer.log" "$result_folder/" "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
 
-    log_file="$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder/$result_folder.log"  # Update path for continued logging
+    log_file="$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/${result_folder}.log"  # Update path for continued logging
     echo "Copied (rsync) files to interal storage:  $INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" | tee -a "$log_file"
 
     rm -rf "$result_folder"
     echo "Deleted local result_folder" | tee -a "$log_file"
 
-    ln -s "$INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" "$result_folder" 
+    ln -s "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder" "$result_folder" 
     echo "Created symbolic link to result in local folder" | tee -a "$log_file"
 
 

@@ -23,6 +23,7 @@ IGM_RUN_DIR="${BASE_DIR}/igm_run"
 NEW_FOLDER_PATH="${IGM_RUN_DIR}/${NEW_FOLDER_NAME}"
 DATA_DIR="${NEW_FOLDER_PATH}/data"
 MODULES_CUSTOM_DIR="${NEW_FOLDER_PATH}/modules_custom"
+POST_PROCESS_DIR="${NEW_FOLDER_PATH}/post_process_scripts"
 
 # Check if the new folder already exists
 if [ -d "$NEW_FOLDER_PATH" ]; then
@@ -40,6 +41,7 @@ fi
 echo "Creating directory structure..."
 mkdir -p "$NEW_FOLDER_PATH"
 mkdir -p "$DATA_DIR"
+mkdir -p "$POST_PROCESS_DIR"
 
 # Copy modules_custom folder from base directory:
 if [ -d "${BASE_DIR}/modules_custom" ]; then
@@ -72,6 +74,9 @@ else
   cp "${SCRIPT_DIR}"/paleo_post_interrupt.sh "$NEW_FOLDER_PATH/"
 fi
 
+# Copy post process scripts to the new folder
+cp "${BASE_DIR}"/post_process_scripts/ice_thickness_outline_extractor.py "$POST_PROCESS_DIR" 
+
 # Copy everything from the specified path to the data subfolder
 echo "Copying data from ${DATA_PATH}..."
 cp -r "${DATA_PATH}"/* "$DATA_DIR/"
@@ -80,6 +85,7 @@ echo "Setup complete! New simulation directory created at: ${NEW_FOLDER_PATH}"
 echo "Directory structure:"
 echo "- ${NEW_FOLDER_NAME}/"
 echo "  ├── data/         (populated with data from ${DATA_PATH})"
+echo "  ├── post_process_scripts/         (populated with data from ${POST_PROCESS_DIR})"
 echo "  ├── modules_custom/ (copied from ${BASE_DIR}/modules_custom/)"
 echo "  └── run scripts (copied from ${BASE_DIR}/run_scripts/)"
 

@@ -7,16 +7,19 @@
                       "iceflow",
                       "time",
                       "thk",
-      		            "vert_flow",
+                      "vert_flow",
                       "avalanche"
                      ],
   "modules_postproc": ["write_ncdf",
-	  	                 "write_tif",
-		                   "write_ts",
+                       "write_tif",
+                       "write_ts",
                        "print_info",
-                       "print_comp"],
+                       "print_comp"
+                      ],
   "lncd_input_file": "data/boot.nc",
   "time_start": -129050.0,
   "time_end": 1950.0,
   "time_save": 1000.0,
+  "precipitation_scaling": 0.1,
+  "temperature_scaling": 3 
 }
