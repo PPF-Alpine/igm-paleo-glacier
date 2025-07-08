@@ -47,7 +47,8 @@ def clip_data(args: argparse.Namespace):
         output_filepath=(args.output_dir / "localised_lapse_rate"),
         resolution=args.resolution,
     )
-def temperature_scale_and_adjustment():
+
+
     
 def check_available_files():
     # Check if input data is available
@@ -146,7 +147,7 @@ if __name__ == "__main__":
             type=Path,
             default=None,
     )
-
+    
     # Check if the required files are present
     check_available_files()
 
