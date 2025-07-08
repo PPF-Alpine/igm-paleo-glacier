@@ -50,13 +50,19 @@ def params(parser):
         default=1.0,
         help="Scaling factor for temperature (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
     )    
+    parser.add_argument(
+        "--temperature_addition",
+        type=float,
+        default=1.0,
+        help="Temperature additon (e.g., 5 for 5 degrees warming)",
+    )
 
 def initialize(params, state):
     # load climate data from netcdf file atm.nc
     atm_nc = Dataset(
         os.path.join("./data/", params.pism_atm_file)
     )
-    prcp = np.squeeze(atm_nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2)
+    prcp = np.squeeze(atm_nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2) * day^(-1)
     temp = np.squeeze(atm_nc.variables["air_temp"]).astype("float32")  # unit : degree celcius
     time_bounds = np.squeeze(atm_nc.variables["time_bounds"]).astype("int")  # unit : bounds for the precipitation and temperature data
     atm_nc.close()
@@ -65,7 +71,7 @@ def initialize(params, state):
     params.yr_0 = params.year_0
 
     # Add the temperature data to the state
-    state.temp = temp * params.temperature_scaling
+    state.temp = (temp + params.temperature_addition) * params.temperature_scaling
 
     # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * day^(-1)
     state.prec = prcp * time_bounds.max() * params.precipitation_scaling

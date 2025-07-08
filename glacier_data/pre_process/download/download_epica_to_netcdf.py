@@ -65,6 +65,9 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     # Interpolate the temperature at the given time using vectorized approach
     delta_T = interp_func(d_t_range)
 
+    # Adjust for polar amplification factor 0.5 (Hansen et al. 2013 cited in https://biogeography.pensoft.net/article/135871/element/4/437//)
+    delta_T = delta_T * 0.5 
+
     # Create xray Dataset
     logger.info("Creating xarray Dataset from numpy array.")
     ds = xr.Dataset(
