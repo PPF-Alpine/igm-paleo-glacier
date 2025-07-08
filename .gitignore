@@ -159,29 +159,40 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-glacier_data/bounding_boxes/
-glacier_data/shapefiles/
-glacier_data/chelsa/
-glacier_data/gebco/
-glacier_data/pbcor/
-glacier_data/epica/
-glacier_data/atm.nc
-glacier_data/boot.nc
-glacier_data/global_lapse_rate/*
+pre_process/bounding_boxes/
+pre_process/shapefiles/
+pre_process/chelsa/
+pre_process/gebco/
+pre_process/pbcor/
+pre_process/epica/
+pre_process/atm.nc
+pre_process/boot.nc
+pre_process/global_lapse_rate/*
 
-# Ignore files in glacier_data/climate_model_outputs/ but keep directory structure
-glacier_data/climate_model_outputs/*
+
+data/raw/climate/chelsa/
+data/raw/climate/gebco/
+data/raw/climate/pbcor/
+data/raw/climate/epica/
+data/raw/climate/global_lapse_rate/*
+data/raw/climate/climate_model_outputs/*.nc
+data/raw/climate/climate_model_outputs/*/*.nc
+data/raw/climate/climate_model_outputs/*/*.status
+data/processed/
+
+# Ignore files in pre_process/climate_model_outputs/ but keep directory structure
+pre_process/climate_model_outputs/*
 
 # Keep subdirectories within climate_model_outputs/
-!glacier_data/climate_model_outputs/*/
+!pre_process/climate_model_outputs/*/
 
 # Ignore all files within the subdirectories
-glacier_data/climate_model_outputs/*/*
+pre_process/climate_model_outputs/*/*
 
 # But include .sh scripts in the subdirectories
-!glacier_data/climate_model_outputs/*/*.sh
+!pre_process/climate_model_outputs/*/*.sh
 
-glacier_data/core_composites/*
+pre_process/core_composites/*
 
 igm_run/*
 !igm_run/example/
@@ -192,7 +203,7 @@ post_process_scripts/*
 !post_process_scripts/ice_thickness_outline_extractor.py
 !post_process_scripts/README.md
 
-glacier_data/bounding_boxes_old
-glacier_data/shapefiles_old
+pre_process/bounding_boxes_old
+pre_process/shapefiles_old
 
 epica/
