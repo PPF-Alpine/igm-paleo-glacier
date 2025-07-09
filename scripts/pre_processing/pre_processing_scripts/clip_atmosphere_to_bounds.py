@@ -89,7 +89,7 @@ def create_cliped_atmosphere(
                 bounds,
                 resolution,
             ),
-            "elevation": reproject_data_array(
+            "elevation": reproject_data_array( #TODO: Check the documentation to see if this is also scaled in some odd way.
                 xr.open_dataarray(
                     chelsa_filepath / "dem_latlong.nc", decode_coords="all"
                 ).isel(lat=slice(None, None, -1)),
@@ -105,7 +105,11 @@ def create_cliped_atmosphere(
         )
         # apply the correction factor to the precipitation data
         ds["precipitation"] *= da_precipitation_cor
-    
+
+    logger.info(f"Applying CHELSA data set scaling factor of 0.1 to precipitation and temperature...")
+    ds["precipitation"] *= 0.1
+    ds["air_temp"] *= 0.1
+
     logger.info(f"DEBUG: output of polygon is - {polygon}")
     logger.info(f"DEBUG: polygon type is - {type(polygon)}")
 

@@ -40,19 +40,19 @@ def save_clipped_model_atmosphere(
     # Fix for rasterio using incorrect SRS source for GTiff files.
     os.environ["GTIFF_SRS_SOURCE"] = "EPSG"
 
-    # Creating clipped LGM atmosphere  
+    # Create and save clipped LGM atmosphere  
     ds = create_cliped_atmosphere(crs, bounds, lgm_filepath, resolution, polygon=polygon)
     ds.to_netcdf(
         output_filepath, encoding={key: {"dtype": "f4"} for key in ds.data_vars.keys()}
     )
 
-    # Creating clipped historical atmosphere  
+    # Create and save clipped historical atmosphere  
     ds = create_cliped_atmosphere(crs, bounds, historical_filepath, resolution, polygon=polygon)
     ds.to_netcdf(
         output_filepath, encoding={key: {"dtype": "f4"} for key in ds.data_vars.keys()}
     )
 
-def create_cliped_atmosphere(
+def create_cliped_atmosphere( #TODO: This function is copied and needs to be heavily modiefied before testing
     crs: str,
     bounds: list[int],
     atmosphere_filepath: Path, 

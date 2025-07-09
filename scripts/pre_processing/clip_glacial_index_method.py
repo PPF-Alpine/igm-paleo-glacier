@@ -31,15 +31,15 @@ def clip_data(args: argparse.Namespace):
         resolution=args.resolution,
     )
 
-    save_clipped_model_atmosphere(
-        crs=args.crs,
-        bounds=args.bounds,
-        lgm_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/lgm_model_climate.nc" ),
-        historical_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/historical_model_climate.nc" ),
-        polygon=args.polygon,
-        output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.atm_output_filename),
-        resolution=args.resolution,
-    )
+    # save_clipped_model_atmosphere(
+    #     crs=args.crs,
+    #     bounds=args.bounds,
+    #     lgm_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/lgm_model_climate.nc" ),
+    #     historical_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/historical_model_climate.nc" ),
+    #     polygon=args.polygon,
+    #     output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.atm_output_filename),
+    #     resolution=args.resolution,
+    # )
 
     save_clipped_bootstrap(
         crs=args.crs,
