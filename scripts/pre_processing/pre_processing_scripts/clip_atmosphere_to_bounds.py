@@ -43,7 +43,8 @@ def save_clipped_atmosphere(
     # Fix for rasterio using incorrect SRS source for GTiff files.
     os.environ["GTIFF_SRS_SOURCE"] = "EPSG"
 
-    ds = create_cliped_atmosphere(crs, bounds, CHELSA_DIR, PBCOR_PATH, resolution, polygon=polygon, apply_pbcor=True)
+    # Creating clipped CHELSA atmosphere without PBCOR correction because it is already included in chelsa 2.0
+    ds = create_cliped_atmosphere(crs, bounds, CHELSA_DIR, PBCOR_PATH, resolution, polygon=polygon, apply_pbcor=False)
 
     ds.to_netcdf(
         output_filepath, encoding={key: {"dtype": "f4"} for key in ds.data_vars.keys()}

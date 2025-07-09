@@ -58,11 +58,11 @@ def convert_epica_to_netcdf(args: argparse.Namespace):
 
 def convert_core_composites_to_netcdf(args: argparse.Namespace):
     save_delta_temperature(
-            polygon=args.polygon, 
-            antarctic_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/antarctica_core_composite.csv"),
-            greenland_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/greenland_core_composite.csv"),
-            output_filepath=Path(LOCATION_BASE_PATH / args.output_dir / args.dT_composite_filename),
-            )
+        polygon=args.polygon, 
+        antarctic_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/antarctica_core_composite.csv"),
+        greenland_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/greenland_core_composite.csv"),
+        output_filepath=Path(LOCATION_BASE_PATH / args.output_dir / args.dT_composite_filename),
+    )
 
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:
