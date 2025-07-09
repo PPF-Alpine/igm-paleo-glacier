@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 def params(parser):
     # CLIMATE PARAMETERS
     parser.add_argument(
-        "--clim_pism_update_freq", #TODO: rename this to "paleo_clim_update_freq" 
+        "--clim_pism_update_freq", #TODO: rename this to "paleo_clim_update_freq" ?
         type=float,
         default=1,
         help="Update the climate each X years",
@@ -27,7 +27,7 @@ def params(parser):
         help="Name of the atmosphere input file for the climate outide the given datatime frame (time, delta_temp, prec_scali)",
     )
     parser.add_argument(
-        "--dt_epica_file",
+        "--delta_temperatures_file",
         type=str,
         default="dT_epica.nc",
         help="Name of the EPICA input file for the climate outside the given datatime frame (time, delta_temp, prec_scali)",
@@ -92,7 +92,7 @@ def initialize(params, state):
 
     # load the EPICA signal from the dT_epica.nc file
     epica_nc = Dataset(
-        os.path.join("./data/", params.dt_epica_file)
+        os.path.join("./data/", params.delta_temperatures_file)
     )
     # extract time BP, change to AD (1950 is present for EPICA)
     time = np.squeeze(epica_nc.variables["time"]).astype("int")  # unit : years

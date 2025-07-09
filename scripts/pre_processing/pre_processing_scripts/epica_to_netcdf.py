@@ -12,6 +12,8 @@ from scipy.interpolate import interp1d
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+EPICA_URL = "ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/antarctica/epica_domec/edc3deuttemp2007.txt"
+
 def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     """
     Convert EPICA data to yearly netCDF data.
