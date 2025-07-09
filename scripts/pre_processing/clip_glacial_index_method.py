@@ -57,16 +57,10 @@ def convert_epica_to_netcdf(args: argparse.Namespace):
         )
 
 def convert_core_composites_to_netcdf(args: argparse.Namespace):
-     #retrieve the latitude parameter set in ArcGIS for the polygon
-    gdf = gpd.read_file(args.polygon)
-    # polygon_latitude = gdf['Latitude'].iloc[0]
-    
-    #logger.info(f"The 'central' latitude of the polygon is: {polygon_latitude}")
-
-    #TODO: Make a new tool in `pre_processing_scripts/` and call it here
     save_delta_temperature(
             polygon=args.polygon, 
-            model_directory=Path(CLIMATE_DATA_PATH / "climate_model_outputs"),
+            antarctic_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/antarctica_core_composite.csv"),
+            greenland_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/greenland_core_composite.csv"),
             output_filepath=Path(LOCATION_BASE_PATH / args.output_dir / args.dT_composite_filename),
             )
 
@@ -178,7 +172,7 @@ if __name__ == "__main__":
     convert_epica_to_netcdf(args=args)
 
     # Call the clip_data function with the provided arguments
-    #clip_data(args=args)
+    clip_data(args=args)
 
     # Convert the polar core composites 
     convert_core_composites_to_netcdf(args=args)
