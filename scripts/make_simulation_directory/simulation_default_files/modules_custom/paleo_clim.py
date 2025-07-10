@@ -15,22 +15,22 @@ from scipy.interpolate import interp1d
 def params(parser):
     # CLIMATE PARAMETERS
     parser.add_argument(
-        "--clim_pism_update_freq", #TODO: rename this to "paleo_clim_update_freq" ?
+        "--clim_update_freq", 
         type=float,
         default=1,
         help="Update the climate each X years",
     )
     parser.add_argument(
-        "--pism_atm_file",
+        "--obs_atm_file",
         type=str,
-        default="atm.nc",
+        default="present_day_observation_atmosphere.nc",
         help="Name of the atmosphere input file for the climate outide the given datatime frame (time, delta_temp, prec_scali)",
     )
     parser.add_argument(
-        "--delta_temperatures_file",
+        "--dt_epica_file",
         type=str,
         default="dT_epica.nc",
-        help="Name of the EPICA input file for the climate outside the given datatime frame (time, delta_temp, prec_scali)",
+        help="Name of the EPICA (delta temperature time series) input file for the climate outside the given datatime frame (delta_temp)",
     )
     parser.add_argument(
         "--year_0",
@@ -53,17 +53,17 @@ def params(parser):
     parser.add_argument(
         "--temperature_addition",
         type=float,
-        default=1.0,
+        default=0.0,
         help="Temperature additon (e.g., 5 for 5 degrees warming)",
     )
 
 def initialize(params, state):
     # load climate data from netcdf file atm.nc
     atm_nc = Dataset(
-        os.path.join("./data/", params.pism_atm_file)
+        os.path.join("./data/", params.obs_atm_file)
     )
-    prcp = np.squeeze(atm_nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2) * day^(-1)
-    temp = np.squeeze(atm_nc.variables["air_temp"]).astype("float32")  # unit : degree celcius
+    precipitation = np.squeeze(atm_nc.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2) * month^(-1)
+    temperature= np.squeeze(atm_nc.variables["air_temp"]).astype("float32")  # unit : degree celcius
     time_bounds = np.squeeze(atm_nc.variables["time_bounds"]).astype("int")  # unit : bounds for the precipitation and temperature data
     atm_nc.close()
 
@@ -71,10 +71,11 @@ def initialize(params, state):
     params.yr_0 = params.year_0
 
     # Add the temperature data to the state
-    state.temp = (temp + params.temperature_addition) * params.temperature_scaling
+    state.temp = (temperature + params.temperature_addition) * params.temperature_scaling
 
-    # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * day^(-1)
-    state.prec = prcp * time_bounds.max() * params.precipitation_scaling
+    # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * month^(-1)
+    # The CHELSA data for precipitation is in monthly *amount*, not a rate. So it is correct to sum the months:
+    state.prec = precipitation * precipitation.sum(axis=0) * params.precipitation_scaling
 
     # intitalize air_temp and precipitation fields
     number_months = 12
@@ -92,7 +93,7 @@ def initialize(params, state):
 
     # load the EPICA signal from the dT_epica.nc file
     epica_nc = Dataset(
-        os.path.join("./data/", params.delta_temperatures_file)
+        os.path.join("./data/", params.dt_epica_file)
     )
     # extract time BP, change to AD (1950 is present for EPICA)
     time = np.squeeze(epica_nc.variables["time"]).astype("int")  # unit : years
@@ -107,7 +108,7 @@ def initialize(params, state):
 
 
 def update(params, state):
-    if (state.t - state.tlast_clim_oggm) >= params.clim_pism_update_freq:
+    if (state.t - state.tlast_clim_oggm) >= params.clim_update_freq:
         if hasattr(state, "logger"):
             state.logger.info("update climate at time : " + str(state.t.numpy()))
         

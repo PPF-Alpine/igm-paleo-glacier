@@ -102,10 +102,6 @@ def create_cliped_atmosphere(
         # apply the correction factor to the precipitation data
         ds["precipitation"] *= da_precipitation_cor
 
-    logger.info(f"Applying CHELSA data set scaling factor of 0.1 to precipitation and temperature...")
-    ds["precipitation"] *= 0.1
-    ds["air_temp"] *= 0.1
-
     # Apply no precipitation polygon zone
     polygon_mask = make_mask_from_polygon(crs, ds, polygon) 
 
@@ -142,20 +138,20 @@ def create_cliped_atmosphere(
         standard_name="time",
         calendar="noleap",
     )
-    # convert precipitation to kg m-2 day-1 by equally distributing the monthly
-    # values across the days.
-    ds["precipitation"] /= xr.DataArray(months[1:], coords={"time": ds.time})
+  
+    # convert precipitation to kg m-2 day-1 by equally distributing the monthly values across the days.
+    #ds["precipitation"] /= xr.DataArray(months[1:], coords={"time": ds.time})
 
     # set variable attributes
     ds.air_temp.attrs.update(
         long_name="near-surface air temperature",
         standard_name="air_temperature",
-        units="degC",
+        units="C",
     )
     ds.precipitation.attrs.update(
-        long_name="mean annual precipitation rate",
+        long_name="mean monthly precipitation rate",
         standard_name="precipitation_flux",
-        units="kg m-2 day-1",
+        units="kg m-2 month-1",
     )
     ds.elevation.attrs.update(
         long_name="ice surface altitude", standard_name="surface_altitude", units="m"
@@ -212,7 +208,7 @@ def read_chelsa_var(chelsa_dir: Path, variable: str) -> xr.DataArray:
         chelsa_paths,
         combine="nested",
         concat_dim="time",
-        decode_cf=True,
+        decode_cf=True,      #This parameter automatically apples scaling factors  and offset values from the metadata in CHELSA
         coords="all",
     )
     logger.info(f"Read {variable} in {perf_counter() - start:.2f} seconds")

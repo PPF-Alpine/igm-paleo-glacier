@@ -6,7 +6,7 @@ from pre_processing_scripts import (
     epica_to_netcdf,
     save_delta_temperature,
     save_clipped_atmosphere,
-    save_clipped_model_atmosphere,
+    save_clipped_model_anomaly,
     save_clipped_bootstrap,
     save_clipped_lapse_rate,
 )
@@ -31,15 +31,13 @@ def clip_data(args: argparse.Namespace):
         resolution=args.resolution,
     )
 
-    # save_clipped_model_atmosphere(
-    #     crs=args.crs,
-    #     bounds=args.bounds,
-    #     lgm_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/lgm_model_climate.nc" ),
-    #     historical_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/historical_model_climate.nc" ),
-    #     polygon=args.polygon,
-    #     output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.atm_output_filename),
-    #     resolution=args.resolution,
-    # )
+    save_clipped_model_anomaly(
+        crs=args.crs,
+        bounds=args.bounds,
+        modeled_anomaly_filepath=(CLIMATE_DATA_PATH / "climate_model_outputs/modeled_anomaly.nc" ),
+        output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.modeled_anomaly_filename),
+        resolution=args.resolution,
+    )
 
     save_clipped_bootstrap(
         crs=args.crs,
@@ -135,6 +133,12 @@ if __name__ == "__main__":
         help="Output filename for processed dT core composite data",
         type=Path,
         default="dT_composite_at_latitude.nc",
+    )
+    parser.add_argument(
+        "--modeled_anomaly_filename",
+        help="Output filename for clipped modeled anomaly data. Taken from ESM.",
+        type=Path,
+        default="modeled_anomaly_clipped.nc",
     )
     parser.add_argument(
         "--atm_output_filename",
