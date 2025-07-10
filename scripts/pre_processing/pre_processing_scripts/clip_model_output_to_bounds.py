@@ -7,7 +7,7 @@ import geopandas as gpd
 import rasterio
 from rasterio.features import geometry_mask
 
-from .clip_bounds import reproject_data_array 
+from .clip_bounds_and_reproject import clip_and_reproject_data_array 
 from .clip_polygon import make_mask_from_polygon
 
 import logging
@@ -76,19 +76,19 @@ def create_cliped_atmosphere( #TODO: This function is copied and needs to be hea
     # combine into dataset
     ds = xr.Dataset(
         {
-            "air_temp": reproject_data_array(
+            "air_temp": clip_and_reproject_data_array(
                 read_chelsa_var(chelsa_dir=chelsa_filepath, variable="tas"),
                 crs,
                 bounds,
                 resolution,
             ),
-            "precipitation": reproject_data_array(
+            "precipitation": clip_and_reproject_data_array(
                 read_chelsa_var(chelsa_dir=chelsa_filepath, variable="pr"),
                 crs,
                 bounds,
                 resolution,
             ),
-            "elevation": reproject_data_array(
+            "elevation": clip_and_reproject_data_array(
                 xr.open_dataarray(
                     chelsa_filepath / "dem_latlong.nc", decode_coords="all"
                 ).isel(lat=slice(None, None, -1)),

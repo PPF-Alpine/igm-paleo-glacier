@@ -2,7 +2,7 @@ import xarray as xr
 import affine
 
 
-def reproject_data_array(
+def clip_and_reproject_data_array(
     da: xr.DataArray, crs: str, bounds: list[int], resolution: int
 ):
     """

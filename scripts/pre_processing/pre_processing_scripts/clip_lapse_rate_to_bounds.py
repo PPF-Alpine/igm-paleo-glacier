@@ -10,7 +10,7 @@ import geopandas as gpd
 import rasterio
 from rasterio.features import geometry_mask
 
-from .clip_bounds import reproject_data_array 
+from .clip_bounds_and_reproject import clip_and_reproject_data_array 
 from .clip_polygon import make_mask_from_polygon
 import logging
 
@@ -61,7 +61,7 @@ def create_clipped_lapse_rate(crs: str, bounds: list[int], lapse_rate_filepath: 
     """
 
     # Returns an xarray DataArray instead of Dataset
-    lapse_rates = reproject_data_array(
+    lapse_rates = clip_and_reproject_data_array(
         read_lapse_rate_data(lapse_rate_dir=lapse_rate_filepath),
         crs,
         bounds,

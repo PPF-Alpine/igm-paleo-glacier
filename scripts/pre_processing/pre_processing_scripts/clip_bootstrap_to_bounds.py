@@ -2,7 +2,7 @@ from pathlib import Path
 import xarray as xr
 from time import perf_counter
 
-from .clip_bounds import reproject_data_array
+from .clip_bounds_and_reproject import clip_and_reproject_data_array 
 
 import logging
 
@@ -49,7 +49,7 @@ def create_cliped_bootstrap(
     """
 
     start = perf_counter()
-    gebco_da = reproject_data_array(
+    gebco_da = clip_and_reproject_data_array(
         # open the data array and set the CRS to WGS84
         xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs(
             "WGS84"
