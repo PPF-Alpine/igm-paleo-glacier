@@ -76,6 +76,7 @@ def initialize(params, state):
     # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * month^(-1)
     # The CHELSA data for precipitation is in monthly *amount*, not a rate. So it is correct to sum the months:
     state.prec = precipitation * precipitation.sum(axis=0) * params.precipitation_scaling
+    # TODO:try both multiply by twelve and sum twelve months here and compare.
 
     # intitalize air_temp and precipitation fields
     number_months = 12
