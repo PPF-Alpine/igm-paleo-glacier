@@ -16,10 +16,10 @@
                        "print_info",
                        "print_comp"
                       ],
-  "lncd_input_file": "data/boot.nc",
+  "lncd_input_file": "data/topography.nc",
   "time_start": -129050.0,
   "time_end": 1950.0,
   "time_save": 1000.0,
-  "precipitation_scaling": 0.1,
-  "temperature_scaling": 3 
+  "precipitation_scaling": 1,
+  "temperature_scaling": 1 
 }
