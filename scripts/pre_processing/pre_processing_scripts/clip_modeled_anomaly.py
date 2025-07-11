@@ -43,6 +43,7 @@ def save_clipped_model_anomaly(
     anomaly_atmosphere.to_netcdf(
         output_filepath, encoding={key: {"dtype": "f4"} for key in anomaly_atmosphere.data_vars.keys()}
     )
+
 def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution):
     """
     Clip atmospheric NetCDF data to specified bounds and reproject to target CRS.
@@ -81,7 +82,7 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
     del ds["tas"]
 
     #Set the unit names and long nanme for the NetCDF file.
-    ds.airtemp.attrs.update(
+    ds.air_temp.attrs.update(
         long_name="Near-Surface Air Temperature",
         standard_name="air_temperature",
         units="K"

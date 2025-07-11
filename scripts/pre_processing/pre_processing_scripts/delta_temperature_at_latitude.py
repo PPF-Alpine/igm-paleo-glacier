@@ -14,7 +14,7 @@ from scipy.interpolate import interp1d
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_path: Path, output_filepath: Path, polygon=None ):
+def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_path: Path, output_filepath: Path, polar_amplification_adjustment_factor: float, polygon=None ):
 
     normalized_latitude = calculate_pole_distances_from_shapefile(polygon)
     logger.info(f"Polygon center pole distance={normalized_latitude:.6f}")
@@ -27,24 +27,14 @@ def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_p
     #Greenland core reaches 129.081 ka BP
     #antarctic_core reaches 799.99 ka BP
 
-    print("Greenland:")
-    missing_summary = greenland_delta_temperature.isnull().sum()
-    print(missing_summary)
-    print(greenland_delta_temperature.head(-10))
-
-    print("Antarcica:")
-    missing_summary_ant = antarctic_delta_temperature.isnull().sum()
-    print(missing_summary_ant)
-    print(antarctic_delta_temperature.head(-10))
-
     # combine the two cores using the latitude weighted value
-    combined_core = combine_weighted_delta_temperature_cores(antarctic_delta_temperature, greenland_delta_temperature, normalized_latitude)
+    combined_core = combine_weighted_delta_temperature_cores(
+        antarctic_delta_temperature, 
+        greenland_delta_temperature, 
+        normalized_latitude, 
+        polar_amplification_adjustment_factor
+    )
     
-    print("combo:")
-    missing_summary_comb = combined_core.isnull().sum()
-    print(missing_summary_ant)
-    print(combined_core.head(-10))
-
     #Save to netcdf
     save_core_to_netcdf(combined_core, output_filepath)
 
@@ -130,13 +120,13 @@ def load_core_data(core_path_csv, oldest_year, temperature_shift=0):
     df_yearly.sort_index(ascending=False, inplace=True)
     return df_yearly
 
-def combine_weighted_delta_temperature_cores(antarctic_core, greenland_core, weight_value):
+def combine_weighted_delta_temperature_cores(antarctic_core, greenland_core, weight_value, polar_amplification_adjustment_facor):
    
     combined_temperature = (antarctic_core["dT"] * (weight_value-1) + greenland_core["dT"] * weight_value)/2 
 
     # Fill in antarcica core with polar amplification adjustment where the Greenland core does not have any data
     # The Greenland core goes back to ~130ka, before this only the Antarcica composite * adjustment (0,5) will be used
-    combined_temperature = combined_temperature.fillna(antarctic_core["dT"] * 0.5)
+    combined_temperature = combined_temperature.fillna(antarctic_core["dT"] * polar_amplification_adjustment_facor)
 
     #Create and return new DataFrame 
     combined_temperature_df = pd.DataFrame({'dT': combined_temperature}, index=antarctic_core.index)

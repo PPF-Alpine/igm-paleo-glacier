@@ -68,6 +68,7 @@ def convert_core_composites_to_netcdf(args: argparse.Namespace):
         antarctic_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/antarctica_core_composite.csv"),
         greenland_composite_path=Path(CLIMATE_DATA_PATH / "core_composites/greenland_core_composite.csv"),
         output_filepath=Path(LOCATION_BASE_PATH / args.output_dir / args.dT_composite_filename),
+        polar_amplification_adjustment_factor=args.polar_amplification,
     )
 
 
@@ -120,7 +121,15 @@ if __name__ == "__main__":
         type=float,
     )
     parser.add_argument(
-        "--resolution", help="Resolution in meters per pixel", type=int, default=1000
+        "--resolution", help="Resolution in meters per pixel", 
+        type=int, 
+        default=1000,
+    )
+    parser.add_argument(
+        "--polar_amplification", 
+        help="The adjusment facor for polar amplification, defaults to 0.5", 
+        type=float, 
+        default=0.5,
     )
     parser.add_argument(
         "--dT_epica_filename",
