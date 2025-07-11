@@ -67,8 +67,25 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
     # Load the NetCDF file
     ds = xr.open_dataset(modeled_anomaly_filepath)
 
-    ds["pr"] *= 31556952.0  # unit to [ kg * m^(-2) * s^(-1) ] -> [ kg * m^(-2) * y^(-1) ]
-    # TODO: change thte name to precipitation and temperature 
+    # This converts the per second precipitation data to yearly using the "in between" normal and leap year rate
+    ds["precipitation"] = ds["pr"] * 31556952.0  # unit to [ kg * m^(-2) * s^(-1) ] -> [ kg * m^(-2) * y^(-1) ]
+    del ds["pr"]
+
+    #Set the unit names and long nanme for the NetCDF file.
+    ds.precipitation.attrs.update(
+        long_name="Mean Yearly Precipitation Rate",
+        standard_name="precipitation_flux",
+        units="kg m^(-2) y^(-1)",
+    )
+    ds["air_temp"] = ds["tas"]
+    del ds["tas"]
+
+    #Set the unit names and long nanme for the NetCDF file.
+    ds.airtemp.attrs.update(
+        long_name="Near-Surface Air Temperature",
+        standard_name="air_temperature",
+        units="K"
+    )
     
     # Identify spatial data variables (those with both lat and lon dimensions)
     spatial_vars = []
@@ -83,8 +100,7 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
     # Create a new dataset with only spatial variables and coordinates
     spatial_ds = ds[spatial_vars + ['lat', 'lon', 'time']]
 
-    #TODO: Treat units here
-    
+  
     # Set the CRS for the spatial data
     spatial_ds = spatial_ds.rio.set_spatial_dims(x_dim="lon", y_dim="lat")
     spatial_ds = spatial_ds.rio.write_crs("EPSG:4326")
@@ -192,107 +208,3 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
         )
     
     return ds_clipped
-
-
-  
-def create_cliped_atmosphere_old( #TODO: This function is copied and needs to be heavily modiefied before testing
-    crs: str,
-    bounds: list[int],
-    atmosphere_filepath: Path, 
-    resolution: int,
-    polygon=None,
-) -> xr.Dataset:
-    """
-    Create a clipped atmosphere dataset.
-
-    Args:
-        crs (str): The coordinate reference system.
-        bounds (list[int]): The bounds of the clipped area.
-        resolution (int): The resolution of the clipped data.
-        polygon (path to shapefile): Shapefile defining area of simulation by setting all precipitation outside it to zero.
-    Returns:
-        xr.Dataset: The clipped atmosphere dataset.
-    """
-
-    # combine into dataset
-    ds = xr.Dataset(
-        {
-            "air_temp": clip_and_reproject_data_array(
-                read_chelsa_var(chelsa_dir=chelsa_filepath, variable="tas"),
-                crs,
-                bounds,
-                resolution,
-            ),
-            "precipitation": clip_and_reproject_data_array(
-                read_chelsa_var(chelsa_dir=chelsa_filepath, variable="pr"),
-                crs,
-                bounds,
-                resolution,
-            ),
-            "elevation": clip_and_reproject_data_array(
-                xr.open_dataarray(
-                    chelsa_filepath / "dem_latlong.nc", decode_coords="all"
-                ).isel(lat=slice(None, None, -1)),
-                crs,
-                bounds,
-                resolution,
-            ),
-        }
-    )
-
-    # Apply no precipitation polygon zone
-    polygon_mask = make_mask_from_polygon(crs, ds, polygon) 
-    
-
-    # Expand mask to include time dimension 
-    mask_expanded = polygon_mask.expand_dims(dim={"time": ds.time})
-
-    # Apply mask to precipitation (set precip to zero where)
-    logger.info("Applying zero precipitation outside the shapefile.")
-
-    # Create a copy of the precipitation data
-    precip_masked = ds["precipitation"].copy(deep=True)
-
-    # Set precipitation to zero outside the polygon.
-    precip_masked = precip_masked.where(mask_expanded, 0)
-    ds["precipitation"] = precip_masked
-
-    # The time bounds are a function to map the monthly data to the start of each month,
-    # with index 0 mapping to the first 31 days, index 1 to the next 28 days, etc..
-    # The 0 is added to the start to make the bounds inclusive.
-    months = np.array(
-        [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], dtype=np.int32
-    )
-    months_cumsum = months.cumsum()
-    bounds = np.stack((months_cumsum[:-1], months_cumsum[1:])).T
-
-    # The time bounds map to the start of each month.
-    ds = ds.assign_coords(
-        time=(("time"), bounds[:, 0]), time_bounds=(("time", "nv"), bounds)
-    )
-    ds.time.attrs.update(
-        bounds="time_bounds",
-        units="days since 1-1-1",
-        standard_name="time",
-        calendar="noleap",
-    )
-    # convert precipitation to kg m-2 day-1 by equally distributing the monthly
-    # values across the days.
-    ds["precipitation"] /= xr.DataArray(months[1:], coords={"time": ds.time})
-
-    # set variable attributes
-    ds.air_temp.attrs.update(
-        long_name="near-surface air temperature",
-        standard_name="air_temperature",
-        units="degC",
-    )
-    ds.precipitation.attrs.update(
-        long_name="mean annual precipitation rate",
-        standard_name="precipitation_flux",
-        units="kg m-2 day-1",
-    )
-    ds.elevation.attrs.update(
-        long_name="ice surface altitude", standard_name="surface_altitude", units="m"
-    )
-
-    return ds

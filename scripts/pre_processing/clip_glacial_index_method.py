@@ -176,11 +176,10 @@ if __name__ == "__main__":
     # Check the provided arguments
     args = check_args(args)
 
-   
     # Log the provided arguments
     logger.info(f"Clipping data with the following arguments: {args}")
 
-    # Convert epica:
+    # Convert epica
     convert_epica_to_netcdf(args=args)
 
     # Call the clip_data function with the provided arguments

@@ -19,17 +19,32 @@ def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_p
     normalized_latitude = calculate_pole_distances_from_shapefile(polygon)
     logger.info(f"Polygon center pole distance={normalized_latitude:.6f}")
 
-    antarctic_delta_temperature = load_core_data(antarctic_composite_path)
+    antarctic_delta_temperature = load_core_data(antarctic_composite_path, -140000) 
 
     temperature_shift_degrees = 31
-    greenland_delta_temperature = load_core_data(greenland_composite_path, temperature_shift_degrees)
+    greenland_delta_temperature = load_core_data(greenland_composite_path, -140000, temperature_shift_degrees)
 
-    print(antarctic_delta_temperature.head(20))
-    print(greenland_delta_temperature.head(20))
+    #Greenland core reaches 129.081 ka BP
+    #antarctic_core reaches 799.99 ka BP
+
+    print("Greenland:")
+    missing_summary = greenland_delta_temperature.isnull().sum()
+    print(missing_summary)
+    print(greenland_delta_temperature.head(-10))
+
+    print("Antarcica:")
+    missing_summary_ant = antarctic_delta_temperature.isnull().sum()
+    print(missing_summary_ant)
+    print(antarctic_delta_temperature.head(-10))
 
     # combine the two cores using the latitude weighted value
     combined_core = combine_weighted_delta_temperature_cores(antarctic_delta_temperature, greenland_delta_temperature, normalized_latitude)
     
+    print("combo:")
+    missing_summary_comb = combined_core.isnull().sum()
+    print(missing_summary_ant)
+    print(combined_core.head(-10))
+
     #Save to netcdf
     save_core_to_netcdf(combined_core, output_filepath)
 
@@ -66,7 +81,7 @@ def calculate_pole_distances_from_shapefile(shapefile_path):
    except Exception as e:
        logger.error(f"Error processing shapefile: {e}")
 
-def load_core_data(core_path_csv, temperature_shift=0):
+def load_core_data(core_path_csv, oldest_year, temperature_shift=0):
     """
     Load temperature CSV with Age [ka BP] and convert to years since 1950
     
@@ -83,6 +98,9 @@ def load_core_data(core_path_csv, temperature_shift=0):
     # Set as index and sort (oldest to newest)
     df.set_index('actual_year', inplace=True)
     df.sort_index(inplace=True)
+
+    # Remove everything older than the oldest_year variable
+    df = df[df.index >= oldest_year]
 
     # Remove duplicate indices (keep first occurrence)
     df = df[~df.index.duplicated(keep='first')]
@@ -103,15 +121,27 @@ def load_core_data(core_path_csv, temperature_shift=0):
     
     # Reindex to yearly resolution with linear interpolation
     df_yearly = df.reindex(yearly_index).interpolate(method='linear')
+
+    # Drop all rows with NaN
+    df_yearly = df_yearly.dropna()
+    # Remove years after 1950
+    df_yearly = df_yearly[df_yearly.index <= 1950]
+
     df_yearly.sort_index(ascending=False, inplace=True)
     return df_yearly
 
 def combine_weighted_delta_temperature_cores(antarctic_core, greenland_core, weight_value):
    
-    combined_temperature = antarctic_core
-    combined_temperature["dT"] = (antarctic_core["dT"] * (weight_value-1) + greenland_core["dT"] * weight_value)/2 
+    combined_temperature = (antarctic_core["dT"] * (weight_value-1) + greenland_core["dT"] * weight_value)/2 
 
-    return combined_temperature
+    # Fill in antarcica core with polar amplification adjustment where the Greenland core does not have any data
+    # The Greenland core goes back to ~130ka, before this only the Antarcica composite * adjustment (0,5) will be used
+    combined_temperature = combined_temperature.fillna(antarctic_core["dT"] * 0.5)
+
+    #Create and return new DataFrame 
+    combined_temperature_df = pd.DataFrame({'dT': combined_temperature}, index=antarctic_core.index)
+
+    return combined_temperature_df
 
 def save_core_to_netcdf(core_dataframe, output_filepath):
     
