@@ -6,6 +6,7 @@ from time import perf_counter
 import os
 import geopandas as gpd
 import rasterio
+import rasterio.enums
 from pyproj import Transformer
 from rasterio.features import geometry_mask
 
@@ -69,7 +70,7 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
     ds = xr.open_dataset(modeled_anomaly_filepath)
 
     # This converts the per second precipitation data to yearly using the "in between" normal and leap year rate
-    ds["precipitation"] = ds["pr"] * 31556952.0  # unit to [ kg * m^(-2) * s^(-1) ] -> [ kg * m^(-2) * y^(-1) ]
+    ds["precipitation"] = ds["pr"] * 31556952.0  # unit to [ kg * m^(-2) * s^(-1) ] -> [ kg * m^(-2) * y^(-1) ]    del ds["pr"]
     del ds["pr"]
 
     #Set the unit names and long nanme for the NetCDF file.
@@ -187,8 +188,13 @@ def clip_atmosphere_to_bounds(crs, bounds, modeled_anomaly_filepath, resolution)
             raise ValueError("No data remaining after initial clipping")
         
         # Now reproject the smaller dataset
-        spatial_ds = spatial_ds.rio.reproject(crs, resolution=resolution)
-        
+        spatial_ds = spatial_ds.rio.reproject(
+            dst_crs=crs, 
+            resolution=resolution,
+            resampling=rasterio.enums.Resampling.bilinear # This line does nothing?
+        )
+
+                
         # Final precise clip in target CRS
         ds_clipped = spatial_ds.rio.clip_box(
             minx=min_x,
