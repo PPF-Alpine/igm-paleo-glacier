@@ -90,22 +90,12 @@ def initialize(params, state):
     state.anomaly_temperature = anomaly_temperature 
     state.anomaly_precipitation = anomaly_precipitation
 
-
-    print(f"SHAPE OF TEMPERATURE: {state.temp.shape}")
-    print(f"SHAPE OF PRECIPITATION: {state.prec.shape}")
-    print(f"SHAPE OF ANOMALY TEMP:{state.anomaly_temperature.shape}")
-    print(f"SHAPE OF ANOMALY PREC:{state.anomaly_precipitation.shape}")
-
     target_y, target_x = state.temp.shape[1], state.temp.shape[2]  # (365, 935)
 
     if state.anomaly_temperature.shape[1:] != (target_y, target_x):
         # Crop to match - take the first 365 rows and 935 columns
         state.anomaly_temperature = state.anomaly_temperature[:, :target_y, :target_x]
         state.anomaly_precipitation = state.anomaly_precipitation[:, :target_y, :target_x]
-        
-        print(f"Cropped anomaly data from {state.anomaly_temperature.shape} to match base climate")
-        print(f"New anomaly temp shape: {state.anomaly_temperature.shape}")
-        print(f"New anomaly prec shape: {state.anomaly_precipitation.shape}")
 
     # Load the paleo climate temperature series
     # Either (1) EPICA signal from the dT_epica.nc file, or (2) the Latitudinally weighted core composites.
@@ -115,9 +105,6 @@ def initialize(params, state):
     delta_T_data = np.squeeze(delta_temperature_signal.variables['delta_T'][:])
     time_data = np.squeeze(delta_temperature_signal.variables['time'][:])
     state.delta_temperature_time_data = time_data
-
-    print(f"delta temp shape : {delta_T_data}")
-    print(f"delta time data shape : {time_data}")
 
     # Find minimum temperature, corresponding to the 0 value in the glacial index
     #TODO: This should perhaps be set to a spesific LGM year e.g. 21000 BP
@@ -137,24 +124,10 @@ def initialize(params, state):
     # Function to interpolate and set delta_T during update/simulation
     state.glacial_index_at_runtime = lambda simulation_time: np.interp(simulation_time, calendar_years, glacial_index, left=glacial_index[0], right=glacial_index[-1] ) # simulation_time is state.t, left and right values will be used beyond the time series data.
 
-    # TODO: unomment the things below and use it to have the opton to still use EPICA, args must be updated...
-
-    # extract time BP, change to AD (1950 is present for EPICA)
-    # time = np.squeeze(delta_temperature_signal.variables["time"]).astype("int")  # unit : years
-    # time = time - params.year_0
-    # extract the dT, i.e. global temp. difference
-    # dT = np.squeeze(delta_temperature_signal.variables["delta_T"]).astype("float32")  # unit : degree Kelvin
     delta_temperature_signal.close()
 
-    # dT is a function of time, we need to interpolate it
-    # to get the dT at the time of the simulation
-    # state.dT = lambda t: np.interp(t, time, dT, left=dT[0], right=dT[-1]) # this will use the fist and last values when beyond the data
-
-    # Set year 0 of the climate data as based on input parameter
-    # params.yr_0 = params.year_0
-
    
-    # intitalize air_temp and precipitation fields
+    # intitalize air_temp and precipitation fields. The final precipitation and temperature must have shape (12,ny,nx)
     number_months = 12
     state.air_temp = tf.Variable(
         tf.zeros((number_months, state.y.shape[0], state.x.shape[0])),
@@ -203,6 +176,13 @@ def update(params, state):
 
         state.meanprec = tf.math.reduce_mean(state.precipitation, axis=0)
         state.meantemp = tf.math.reduce_mean(state.air_temp, axis=0)
+
+        # TODO: convert temperature and precipitation resulting data to correct output format for netcdf file for validation:
+        # ValueError: cannot reshape array of size 4095300 into shape (1,10,365,935)
+        # ValueError: operands could not be broadcast together with remapped shapes [original->remapped]: (12,365,935)  and requested shape (1,10,365,935)
+        state.out_temperature =  state.air_temp
+        state.out_precipitation =  state.precipitation
+        #This can then be output to the nc result file for quick lookup
 
         state.tlast_clim_oggm.assign(state.t)
 

@@ -1,11 +1,33 @@
 # IGM Paleo Glacier Model
 
 ## Overview
-This project contains the resources necessary for running the world wide IGM Paleo Glacier  model. The [Instructed Glacier Model (IGM)](https://github.com/jouvetg/igm) is a machine learning glacier model that can run very fast on GPU's. Here we use custom modules to download and use paleo-climate data with the IGM model. Required dependencies and installation steps are described in detail below.
+This project contains the resources necessary for running the world wide IGM Paleo Glacier model. The [Instructed Glacier Model (IGM)](https://github.com/jouvetg/igm) is a machine learning glacier model that run very fast on GPU's. Here we use custom modules to download and use paleo-climate data with the IGM model. Required dependencies and installation steps are described in detail below.
+
+## Directory structure
+```
+/
+├── data/
+│   ├── processed/
+│   └── raw/
+│       ├── climate/
+│       └── location_boundaries/
+├── igm_run/
+├── scripts/
+│   ├── download/
+│   ├── make_simulation_directory/
+│   │   ├── modules_custom/
+│   │   └── make_new_simulation_directory.sh
+│   ├── post_process/
+│   └── pre_process/
+│       ├── pre_processing_scripts
+│       └── clip_glacial_index_method.py
+└── README.md
+```
+
 ## Background
 IGM is well suited to grab glacier data from the Randolph Glacier Inventory and adding available climate/mass balance and topography data. This is mostly focused towards recent and  future projections. Here we load paleo data and use them in a custom module:
 
-   - [**Chelsa**](https://chelsa-climate.org) with [**PBCOR**](https://www.gloh2o.org/pbcor/): Paleo climate data
+   - [**Chelsa**](https://chelsa-climate.org): Paleo climate data
    - [**GEBCO**](https://www.gebco.net/): Topography data
    - [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
 
@@ -15,7 +37,7 @@ IGM is well suited to grab glacier data from the Randolph Glacier Inventory and 
 - Anaconda (recommended for environments)
 
 ## Installation
-The model consists of two parts, *pre-processing* (downloading and processing climate data) and *simulation* (running IGM with the processed climate data).
+The model consists of four parts,*download* (downloading relevant data sets), *pre-processing* (for processing climate data), *simulation* (running IGM with the processed climate data) and *post-processing* (converts results to shapefiles).
 
 >This installation process has been tested in WSL (Windows Subsystem for Linux).
 
@@ -33,18 +55,18 @@ conda create --name pre_process python=3.10
 conda activate pre_process
 ```
 
-The required packages and versions can be installed by pip with `requirements.txt` in the main directory:
+The required packages and versions can be installed by pip with `requirements.txt` in the scripts/ directory:
 ```shell
+cd scripts/
 pip install -r requirements.txt
 ```
 
 #### Downloading climate data
-Navigate to the `glacer_data/` folder and run the `pre_process.py` script:
+Navigate to the `scripts/download/` folder and run the `download_climate_data.py` script:
 ```shell
-python3 pre_process.py
+python download_climate_data.py
 ```
-
-The first time you run the script, it will download the data from various sources and store it under the `glacier_data` directory. The total amount of data is ~18 GB, it may take some time to download. 
+The script will download the data from various sources and store it under the `data/raw/climate/` directory. The total amount of data is ~18 GB, it may take some time to download. 
 
 ##### CHELSA data file errors
 The `download_chelsa.py` script uses an outdated link. If you get "unsupported file format" errors, or the CHELSA tif-files download in less than 1 second, download the files manually with the `chelsa_paths.txt` file:
@@ -52,7 +74,7 @@ The `download_chelsa.py` script uses an outdated link. If you get "unsupported f
 wget --no-host-directories --force-directories --input-file=chelsa_paths.txt
 ```
 
-If the files are located in sub folders, extract them all to  the same `glacer_data/chelsa/` folder.
+If the files are located in sub folders, extract them all to  the same `climate/chelsa/` folder.
 
 Alternatively, select and download manually from https://chelsa-climate.org/downloads/:
 
@@ -67,7 +89,7 @@ Download the wget `.txt` generated file. Run the command:
 wget --no-host-directories --force-directories --input-file=envidatS3paths.txt
 ```
 
-If the files are located in sub folders, extract them all to  the same `glacer_data/chelsa/` folder.
+If the files are located in sub folders, extract them all to  the same `climate/chelsa/` folder.
 
 ### Clipping data for a new region
 You can now download and automatically pre-process climate and topography data for selected regions. Suggested workflow:

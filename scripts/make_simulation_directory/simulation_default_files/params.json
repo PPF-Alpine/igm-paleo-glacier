@@ -17,6 +17,13 @@
                        "print_comp"
                       ],
   "lncd_input_file": "data/topography.nc",
+   "wncd_vars_to_save": [
+    "topg",
+    "thk",
+    "smb",
+    "meantemp",
+    "meanprec"
+  ],
   "time_start": -129050.0,
   "time_end": 1950.0,
   "time_save": 1000.0,
