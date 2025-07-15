@@ -158,6 +158,7 @@ $$X(x,y,t) = G*X_{PI} + (1-G)*X_{LGM}$$
 
 
 #### Latitudinally weighted delta temperature signal
+As the shape file is loaded by the `clip_glacial_index_method.py`, the center latitude is extracted and passed on to the `delta_temperature_at_latitude.py` functions. The latitude is normalised so that Antarctica has the weight 0, equator is 0.5, and the North Pole (TODO: change to Greenland/middle of cores) is 1.   
 
 Placeholder formula for weighting:
 
