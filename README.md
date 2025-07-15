@@ -7,11 +7,11 @@ This project contains the resources necessary for running the world wide IGM Pal
 ```
 /
 ├── data/
-│   ├── processed/  #pre processed and clipped data per location
+│   ├── processed/                   # pre-processed and clipped data per location
 │   └── raw/
-│       ├── climate/
-│       └── location_boundaries/
-├── igm_run/
+│       ├── climate/                 # raw climate data downloads  
+│       └── location_boundaries/     # shape file boundary for each location 
+├── igm_run/                         # simulation run directory
 ├── scripts/
 │   ├── download/
 │   ├── make_simulation_directory/
@@ -26,10 +26,9 @@ This project contains the resources necessary for running the world wide IGM Pal
 
 ## Background
 IGM is well suited to grab glacier data from the Randolph Glacier Inventory and adding available climate/mass balance and topography data. This is mostly focused towards recent and  future projections. Here we load paleo data and use them in a custom module:
-
-   - [**Chelsa**](https://chelsa-climate.org): Paleo climate data
-   - [**GEBCO**](https://www.gebco.net/): Topography data
-   - [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
+- [**Chelsa**](https://chelsa-climate.org): Paleo climate data
+- [**GEBCO**](https://www.gebco.net/): Topography data
+- [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
 
 ## Prerequisites
 - Python 3.10 (>3.11)
