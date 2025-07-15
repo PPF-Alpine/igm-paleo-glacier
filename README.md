@@ -151,18 +151,21 @@ The `modules_custom` directory contains custom modules that are used by IGM to l
 
 #### The Glacial Index Method
 The glacial index method is a climate forcing approach taking the present day climate observations and modulating them with an ice core delta temperature signal.  
+There are three components to the method, the present day observed climate from CHELSA ($X_{obs}$), the modeled anomaly from PMIP6 ($\Delta X$), and the delta temperature signal obtained from ice sheet cores. The temperature signal is converted to a glacial index ($G$), by setting LGM as 0 and present day to 1 in a normalised scale. This way the temperature and precipitation are interpolated linearly between the two climate states.
 
-There are three components to the method, 
+The modeled anomaly ($\delta X) is derived from climate model data at the LCM ($X_{LGM}$) and historical present 1950-2010 ($X_{PI}$):
+$$\Delta X = X_{PI} - X_{LGM}$$
 
-$$X(x,y,t) = G*X_{PI} + (1-G)*X_{LGM}$$
+Each variable is calculated in the same way: 
 
+$$X(x,y,t) = X_{obs} + (1-G)*\Delta X$$
 
 #### Latitudinally weighted delta temperature signal
 As the shape file is loaded by the `clip_glacial_index_method.py`, the center latitude is extracted and passed on to the `delta_temperature_at_latitude.py` functions. The latitude is normalised so that Antarctica has the weight 0, equator is 0.5, and the North Pole (TODO: change to Greenland/middle of cores) is 1.   
 
 Placeholder formula for weighting:
 
-$$dT_{weighted} = (dT_{antarcica}*(1-weight)+dT_{greenland}*weight)/2$$
+$$dT_{weighted} = (dT_{Antarctica}*(1-weight)+dT_{Greenland}*weight)/2$$
 
 The Greenland core composite data ends at 129.081 ka BP, while Antarctica has data much further back. At the time period before 129 ka BP the core composites can't be combined as the data is missing. Here only the Antarctic core is used, with a polar amplification adjustment factor of 0.5 to account for the difference. 
 
