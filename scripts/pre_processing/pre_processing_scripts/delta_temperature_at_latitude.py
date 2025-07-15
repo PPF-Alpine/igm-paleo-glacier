@@ -125,7 +125,7 @@ def load_core_data(core_path_csv, oldest_year, temperature_shift=0):
 
 def combine_weighted_delta_temperature_cores(antarctic_core, greenland_core, weight_value, polar_amplification_adjustment_facor):
    
-    combined_temperature = (antarctic_core["dT"] * (weight_value-1) + greenland_core["dT"] * weight_value)/2 
+    combined_temperature = (antarctic_core["dT"] * (1-weight_value) + greenland_core["dT"] * weight_value)/2 
 
     # Fill in antarcica core with polar amplification adjustment where the Greenland core does not have any data
     # The Greenland core goes back to ~130ka, before this only the Antarcica composite * adjustment (0,5) will be used

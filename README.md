@@ -1,9 +1,9 @@
 # IGM Paleo Glacier Model
 
-## Overview
+## 1. Overview
 This project contains the resources necessary for running the world wide IGM Paleo Glacier model. The [Instructed Glacier Model (IGM)](https://github.com/jouvetg/igm) is a machine learning glacier model that run very fast on GPU's. Here we use custom modules to download and use paleo-climate data with the IGM model. Required dependencies and installation steps are described in detail below.
 
-### Directory structure
+### 1.1 Directory structure
 ```
 /
 ├── data/
@@ -24,7 +24,7 @@ This project contains the resources necessary for running the world wide IGM Pal
 └── README.md
 ```
 
-## Background
+## 2. Background
 IGM is well suited to grab glacier data from the Randolph Glacier Inventory and adding available climate/mass balance and topography data. This is mostly focused towards recent and  future projections. Here we load paleo data and use them in a custom module:
 - [**Chelsa**](https://chelsa-climate.org): Paleo climate data
 - [**GEBCO**](https://www.gebco.net/): Topography data
@@ -33,17 +33,17 @@ IGM is well suited to grab glacier data from the Randolph Glacier Inventory and 
 - [Greenland Core Composite](https://doi.pangaea.de/10.1594/PANGAEA.957135): Ice core data and delta temperature
 - [Antarctica Core Composite](https://doi.pangaea.de/10.1594/PANGAEA.810188): Ice core data and delta temperature
 
-## Prerequisites
+## 3. Prerequisites
 - Python 3.10 (>3.11)
 - pip
 - Anaconda (recommended for environments)
 
-## First time setup 
+## 4. First time setup 
 The model consists of four parts,*download* (downloading relevant data sets), *pre-processing* (for processing climate data), *simulation* (running IGM with the processed climate data) and *post-processing* (converts results to shapefiles).
 
 >This installation process has been tested in WSL (Windows Subsystem for Linux).
 
-### Installing IGM and dependencies
+### 4.1 Installing IGM and dependencies
 The first step is to install the required dependencies. It is recommended to first install Anaconda or an equivalent for environment set up. 
 
 ```shell
@@ -63,10 +63,16 @@ cd scripts/
 pip install -r requirements.txt
 ```
 
-Install IGM ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment (separate from the pre_process) is recommended. 
+Install IGM ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment (separate from the pre_process) is recommended.
+
+```shell
+git clone https://github.com/jouvetg/igm.git
+cd igm
+pip install -e . 
+```
 
 
-### Downloading climate data
+### 4.2 Downloading climate data
 Navigate to the `scripts/download/` folder and run the `download_climate_data.py` script:
 ```shell
 python download_climate_data.py
@@ -99,17 +105,17 @@ wget --no-host-directories --force-directories --input-file=envidatS3paths.txt
 
 If the files are located in sub folders, extract them all to  the same `climate/chelsa/` folder.
 
-### Clipping data for a new region
-You can now crop and automatically pre-process climate and topography data for selected regions. Suggested workflow:
+## 5. Clipping data for a new region
+Crop and automatically pre-process climate and topography data for selected regions. Suggested workflow:
 
 - Create a bounding box in ArcGIS
     - Export its extent in EPSG format (e.g. `-52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544` )
 - Create a polygon bounding box in ArcGIS to limit the area
     - Export its shapefile
-    - Place the shapefile in data/raw/location_boundaries/'area_name'
+    - Place the shapefile in data/raw/location_boundaries/'area name'
 - Process the data with the extent information as described in example below.
 
-#### Example: The Caucasus mountain range
+### 5.1 Example: The Caucasus mountain range
 ```shell
 python clip_glacial_index_method.py --crs "EPSG:6933" --bounds 3813003.992500 4767963.246100 4748752.838900 5133150.315100 --polygon ../../data/raw/location_boundaries/5_caucasus/caucasus_bb.shp --output_dir caucasus
 ```
@@ -133,16 +139,32 @@ This will generate and place new files under the `caucasus/` directory like spec
 After pre processing with `clip_glacial_index_method.py` run `./make_new_simulation_directory.sh caucasus_test ../../data/processed/caucasus` from the run_sripts folder to generate a simulation directory automatically. The script `make_new_simulation_directory.sh` will create a new directory `igm_run/caucasus_test/` and fill it with links to the required scrips (from the `simulation_default_files/` dir) and links to the data folder. 
 
 
-## Running IGM with paleo data
+## 6. Running IGM with paleo data
 Redefine your `params.json` and run the script `paleo_igm.sh` with data and file structure in the example above.
 
-## Custom Modules
+## 7. Custom Modules
 The `modules_custom` directory contains custom modules that are used by IGM to load the paleo climate data inputs. These modules include:
 - `paleo_clim.py`: A module for initializing and updating the paleo climate variables using the Glacial Index Method.
 - `paleo_smb.py`: A module for calculating surface mass balance.  
 
-### Climate module: `paleo_clim.py`
-//TODO
+### 7.1 Climate module: `paleo_clim.py`
 
-### Surface Mass Balance: `paleo_smb.py`
+#### The Glacial Index Method
+The glacial index method is a climate forcing approach taking the present day climate observations and modulating them with an ice core delta temperature signal.  
+
+There are three components to the method, 
+
+$$X(x,y,t) = G*X_{PI} + (1-G)*X_{LGM}$$
+
+
+#### Latitudinally weighted delta temperature signal
+
+Placeholder formula for weighting:
+
+$$dT_{weighted} = (dT_{antarcica}*(1-weight)+dT_{greenland}*weight)/2$$
+
+The Greenland core composite data ends at 129.081 ka BP, while Antarctica has data much further back. At the time period before 129 ka BP the core composites can't be combined as the data is missing. Here only the Antarctic core is used, with a polar amplification adjustment factor of 0.5 to account for the difference. 
+
+
+### 7.2 Surface Mass Balance: `paleo_smb.py`
 //TODO
