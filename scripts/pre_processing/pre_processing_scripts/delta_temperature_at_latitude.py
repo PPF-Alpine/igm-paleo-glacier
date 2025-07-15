@@ -21,7 +21,7 @@ def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_p
 
     antarctic_delta_temperature = load_core_data(antarctic_composite_path, -140000) 
 
-    temperature_shift_degrees = 31
+    temperature_shift_degrees = 31 #TODO: Find out if this is the correct approach.
     greenland_delta_temperature = load_core_data(greenland_composite_path, -140000, temperature_shift_degrees)
 
     #Greenland core reaches 129.081 ka BP
@@ -34,9 +34,12 @@ def save_delta_temperature(antarctic_composite_path: Path, greenland_composite_p
         normalized_latitude, 
         polar_amplification_adjustment_factor
     )
-    
+
+    # reverse the order of the dataset to start at the oldest time
+    combined_core_chronological = combined_core.iloc[::-1]
+
     #Save to netcdf
-    save_core_to_netcdf(combined_core, output_filepath)
+    save_core_to_netcdf(combined_core_chronological, output_filepath)
 
     
 def calculate_pole_distances_from_shapefile(shapefile_path):
@@ -136,8 +139,8 @@ def combine_weighted_delta_temperature_cores(antarctic_core, greenland_core, wei
 def save_core_to_netcdf(core_dataframe, output_filepath):
     
      # Extract time and data from DataFrame
-    time_values = core_dataframe.index.values  # Your actual_year values
-    delta_T_values = core_dataframe['dT'].values  # Your temperature data
+    time_values = core_dataframe.index.values  # Actual_year values
+    delta_T_values = core_dataframe['dT'].values  # Temperature data
 
     # Create xarray Dataset
     ds = xr.Dataset(

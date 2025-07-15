@@ -69,6 +69,7 @@ def initialize(params, state):
     observed_atmosphere = Dataset( os.path.join("./data/", params.obs_atmosphere_file))
     observed_precipitation = np.squeeze(observed_atmosphere.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2) * month^(-1)
     observed_temperature= np.squeeze(observed_atmosphere.variables["air_temp"]).astype("float32")  # unit : degree Celsius
+    observed_atmosphere_time = np.squeeze(observed_atmosphere.variables["time"]).astype("float32") # unit: years, TODO:  this is a test
     observed_atmosphere.close()
 
     # Add the temperature data to the state
@@ -111,21 +112,30 @@ def initialize(params, state):
     delta_temperature_signal = Dataset(os.path.join("./data/", params.delta_temperature_file))
 
     # Access the variable data as numpy arrays
-    delta_T_data = delta_temperature_signal.variables['delta_T'][:]
-    time_data = delta_temperature_signal.variables['time'][:]
+    delta_T_data = np.squeeze(delta_temperature_signal.variables['delta_T'][:])
+    time_data = np.squeeze(delta_temperature_signal.variables['time'][:])
     state.delta_temperature_time_data = time_data
 
-    # Find minimum temperature
-    min_temp = np.nanmin(delta_T_data)
+    print(f"delta temp shape : {delta_T_data}")
+    print(f"delta time data shape : {time_data}")
 
-    # Find 1950 value (time=0 corresponds to 1950 based on your time units)
-    temp_1950_idx = np.where(time_data == 0)[0][0]  # Find index where time=0 (1950)
-    temp_1950 = delta_T_data[temp_1950_idx]
+    # Find minimum temperature, corresponding to the 0 value in the glacial index
+    #TODO: This should perhaps be set to a spesific LGM year e.g. 21000 BP
+    minimum_temperature = np.nanmin(delta_T_data)
 
-    # Create normalized index
-    normalized_index = (delta_T_data - min_temp) / (temp_1950 - min_temp)
-    state.glacial_index = normalized_index
- 
+    # Find the closest index and value for the present(1950)/historical, corresponding to the 1 value in the glacial index
+    # TODO: This should perhaps be 1850, i.e preindustrial
+    closest_1950_index = np.argmin(np.abs(time_data - 0))
+    temperature_1950 = delta_T_data[closest_1950_index]
+
+    # Create normalized glacial index
+    glacial_index = (delta_T_data - minimum_temperature) / (temperature_1950 - minimum_temperature)
+
+    # Convert time from "years before present (1950) / BP" to "calander years"
+    calendar_years = time_data - params.year_0
+
+    # Function to interpolate and set delta_T during update/simulation
+    state.glacial_index_at_runtime = lambda simulation_time: np.interp(simulation_time, calendar_years, glacial_index, left=glacial_index[0], right=glacial_index[-1] ) # simulation_time is state.t, left and right values will be used beyond the time series data.
 
     # TODO: unomment the things below and use it to have the opton to still use EPICA, args must be updated...
 
@@ -138,12 +148,11 @@ def initialize(params, state):
 
     # dT is a function of time, we need to interpolate it
     # to get the dT at the time of the simulation
-    # state.dT = lambda t: np.interp(t, time, dT, left=dT[0], right=dT[-1])
+    # state.dT = lambda t: np.interp(t, time, dT, left=dT[0], right=dT[-1]) # this will use the fist and last values when beyond the data
 
     # Set year 0 of the climate data as based on input parameter
     # params.yr_0 = params.year_0
 
-   
    
     # intitalize air_temp and precipitation fields
     number_months = 12
@@ -159,29 +168,21 @@ def initialize(params, state):
     state.tlast_clim_oggm = tf.Variable(-(10**10), dtype="float32", trainable=False)
     state.tcomp_clim_oggm = []
 
-
-
-
 def update(params, state):
     if (state.t - state.tlast_clim_oggm) >= params.paleo_clim_update_freq:
         if hasattr(state, "logger"):
             state.logger.info("update climate at time : " + str(state.t.numpy()))
+
+        try: 
+            glacial_index_at_runtime = state.glacial_index_at_runtime(state.t.numpy())
+        except ValueError:
+            logger.error("No more delta temperature data at this time value.")
+            return
         
-        # try:
-        #     dT = state.dT(state.t.numpy())
-        # except ValueError:
-        #     # break out of the loop if the dT is not available
-        #     return
-
-        # Find current time index (assuming you have current time available)
-        current_time_idx = np.argmin(np.abs(state.delta_temperature_time_data - state.t))
-        current_glacial_index = state.glacial_index[current_time_idx]
-
         state.tcomp_clim_oggm.append(time.time())
 
-        # (state.prec + (1 - glacial_index) * state.anomaly_precipitation)
-        state.precipitation = tf.convert_to_tensor(state.prec + (1 - current_time_idx) * state.anomaly_precipitation, dtype="float32")
-
+        # Compute the precipitation variable with the glacial index method: x = observed + (1 - G) * delta_x
+        state.precipitation = tf.convert_to_tensor(state.prec + (1 - glacial_index_at_runtime) * state.anomaly_precipitation, dtype="float32")
 
         # If state.anomaly_temperature is 2D (ny, nx), add time dimension
         if state.anomaly_temperature.ndim == 2:
@@ -189,14 +190,8 @@ def update(params, state):
         else:
             anomaly_temp = state.anomaly_temperature
         
-        ####temp_modified = state.temp + (1 - current_glacial_index) * anomaly_temp
-        state.air_temp = tf.convert_to_tensor(state.temp + (1 - current_glacial_index) * state.anomaly_temperature, dtype="float32")
-
-        # The shape of state.temp is (12,ny,nx), all that is needed is to add the dT to the temperature
-        # and to create a tensor from the numpy array
-
-        # state.temp + (1 - glacial_index) * state.anomaly_temperature
-        # state.air_temp = tf.convert_to_tensor(state.temp, dtype="float32")
+        # Compute the temperature variable with the glacial index method: x = observed + (1 - G) * delta_x
+        state.air_temp = tf.convert_to_tensor(state.temp + (1 - glacial_index_at_runtime) * state.anomaly_temperature, dtype="float32")
 
         # vertical correction (lapse rates)
         temp_corr_addi = params.temp_default_gradient * state.usurf
