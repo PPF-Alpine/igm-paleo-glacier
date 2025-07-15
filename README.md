@@ -13,14 +13,14 @@ This project contains the resources necessary for running the world wide IGM Pal
 │       └── location_boundaries/     # shape file boundary for each location 
 ├── igm_run/                         # simulation run directory
 ├── scripts/
-│   ├── download/
+│   ├── download/                    # scripts for downloading and converting data
 │   ├── make_simulation_directory/
 │   │   ├── modules_custom/
-│   │   └── make_new_simulation_directory.sh
+│   │   └── make_new_simulation_directory.sh    # makes a simulation run directory for new location
 │   ├── post_process/
 │   └── pre_process/
 │       ├── pre_processing_scripts
-│       └── clip_glacial_index_method.py
+│       └── clip_glacial_index_method.py        # clips and pre-processes data to boundary
 └── README.md
 ```
 
@@ -29,6 +29,9 @@ IGM is well suited to grab glacier data from the Randolph Glacier Inventory and 
 - [**Chelsa**](https://chelsa-climate.org): Paleo climate data
 - [**GEBCO**](https://www.gebco.net/): Topography data
 - [**EPICA**](https://doi.pangaea.de/10.1594/PANGAEA.683655): Ice core data and delta T as a proxy for temperature
+- [CMIP6 / MPI-ESM1-2](https://catalogue.ceda.ac.uk/uuid/65edc10dc0664aeda89dec81f2c6426e/): Modeled climate data for anomaly calculation.
+- [Greenland Core Composite](https://doi.pangaea.de/10.1594/PANGAEA.957135): Ice core data and delta temperature
+- [Antarctica Core Composite](https://doi.pangaea.de/10.1594/PANGAEA.810188): Ice core data and delta temperature
 
 ## Prerequisites
 - Python 3.10 (>3.11)
@@ -40,7 +43,7 @@ The model consists of four parts,*download* (downloading relevant data sets), *p
 
 >This installation process has been tested in WSL (Windows Subsystem for Linux).
 
-### First time setup 
+### Installing IGM and dependencies
 The first step is to install the required dependencies. It is recommended to first install Anaconda or an equivalent for environment set up. 
 
 ```shell
@@ -63,7 +66,7 @@ pip install -r requirements.txt
 Install IGM ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment (separate from the pre_process) is recommended. 
 
 
-#### Downloading climate data
+### Downloading climate data
 Navigate to the `scripts/download/` folder and run the `download_climate_data.py` script:
 ```shell
 python download_climate_data.py
@@ -73,7 +76,7 @@ The script will download the data from various sources and store it under the `d
 >TODO: This script does not yet download the core composites nor the modeled anomaly ESM data. Manual download and pre-processing required.
 
 
-##### CHELSA data file errors
+#### CHELSA data file errors
 The `download_chelsa.py` script uses an outdated link. If you get "unsupported file format" errors, or the CHELSA tif-files download in less than 1 second, download the files manually with the `chelsa_paths.txt` file:
 ```
 wget --no-host-directories --force-directories --input-file=chelsa_paths.txt
