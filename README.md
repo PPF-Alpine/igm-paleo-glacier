@@ -3,11 +3,11 @@
 ## Overview
 This project contains the resources necessary for running the world wide IGM Paleo Glacier model. The [Instructed Glacier Model (IGM)](https://github.com/jouvetg/igm) is a machine learning glacier model that run very fast on GPU's. Here we use custom modules to download and use paleo-climate data with the IGM model. Required dependencies and installation steps are described in detail below.
 
-## Directory structure
+### Directory structure
 ```
 /
 ├── data/
-│   ├── processed/
+│   ├── processed/  #pre processed and clipped data per location
 │   └── raw/
 │       ├── climate/
 │       └── location_boundaries/
@@ -36,7 +36,7 @@ IGM is well suited to grab glacier data from the Randolph Glacier Inventory and 
 - pip
 - Anaconda (recommended for environments)
 
-## Installation
+## First time setup 
 The model consists of four parts,*download* (downloading relevant data sets), *pre-processing* (for processing climate data), *simulation* (running IGM with the processed climate data) and *post-processing* (converts results to shapefiles).
 
 >This installation process has been tested in WSL (Windows Subsystem for Linux).
@@ -61,12 +61,18 @@ cd scripts/
 pip install -r requirements.txt
 ```
 
+Install IGM ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment (separate from the pre_process) is recommended. 
+
+
 #### Downloading climate data
 Navigate to the `scripts/download/` folder and run the `download_climate_data.py` script:
 ```shell
 python download_climate_data.py
 ```
 The script will download the data from various sources and store it under the `data/raw/climate/` directory. The total amount of data is ~18 GB, it may take some time to download. 
+
+>TODO: This script does not yet download the core composites nor the modeled anomaly ESM data. Manual download and pre-processing required.
+
 
 ##### CHELSA data file errors
 The `download_chelsa.py` script uses an outdated link. If you get "unsupported file format" errors, or the CHELSA tif-files download in less than 1 second, download the files manually with the `chelsa_paths.txt` file:
@@ -92,52 +98,49 @@ wget --no-host-directories --force-directories --input-file=envidatS3paths.txt
 If the files are located in sub folders, extract them all to  the same `climate/chelsa/` folder.
 
 ### Clipping data for a new region
-You can now download and automatically pre-process climate and topography data for selected regions. Suggested workflow:
+You can now crop and automatically pre-process climate and topography data for selected regions. Suggested workflow:
+
 - Create a bounding box in ArcGIS
-    - Export its extent in EPSG format
-- Optional: Create a polygon bounding box in ArcGIS to limit the area
-    - Export its shapefiles
+    - Export its extent in EPSG format (e.g. `-52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544` )
+- Create a polygon bounding box in ArcGIS to limit the area
+    - Export its shapefile
+    - Place the shapefile in data/raw/location_boundaries/'area_name'
 - Process the data with the extent information as described in example below.
 
 #### Example: The Caucasus mountain range
 ```shell
-python3 pre_process.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --output_dir caucasus
+python clip_glacial_index_method.py --crs "EPSG:6933" --bounds 3813003.992500 4767963.246100 4748752.838900 5133150.315100 --polygon ../../data/raw/location_boundaries/5_caucasus/caucasus_bb.shp --output_dir caucasus
 ```
 
+This will generate and place new files under the `caucasus/` directory like specified above. The new files will be all the data required to run the model:
 ```shell
-python3 pre_process_polygon.py --crs "EPSG:32638" --bounds -52549.60008263553 4495896.221676036 856472.3595563626 4927057.129636544 --polygon ./shapefiles/caucasus_eurasia_bounding_polygon.shp --output_dir caucasus
+/
+└── data/
+    ├── processed/
+    │   └── caucasus/
+    │       ├── dT_composite_at_latitude.nc
+    │       ├── dT_epica.nc
+    │       ├── localised_lapse_rate.nc
+    │       ├── localised_lapse_rate.txt
+    │       ├── modeled_anomaly_clipped.nc
+    │       ├── present_day_observed_atmosphere.nc
+    │       ├── projection.txt
+    │       └── topography.nc
 ```
 
-This will place three files (`atm.nc`, `boot.nc` and `dT_epica.nc`) in a folder named `caucasus/` in the current directory. These Files needs to be moved/copied to the folder with the IGM run file (`params.json`) under a new folder named `data/`. See the `igm_run/example/` folder to get an idea. 
-
-Example folder structure:
-```directory 
-igm_run/
-	├── example/
-	└── caucasus/ 
-		├── data/  
-		│	├── atm.nc
-		│	├── boot.nc
-		│	└── dT_epica.nc
-		├── modules_custom/
-		│   └── ...
-		├──	params.json
-		└── paleo_igm.sh
-```
-
-A good approach for multiple runs is to copy and rename the `example/` folder for each newly clipped region. Multiple runs on the same region (with new `params.json`) can be automatically handled by running the `paleo_igm.sh` script in place of `igm_run`.
-
-After pre processing with `pre_process.py` or `pre_process_polygon.py` run the `./make_new_simulation_directory.sh` from the run_sripts folder to do all this automatically.
+After pre processing with `clip_glacial_index_method.py` run `./make_new_simulation_directory.sh caucasus_test ../../data/processed/caucasus` from the run_sripts folder to generate a simulation directory automatically. The script `make_new_simulation_directory.sh` will create a new directory `igm_run/caucasus_test/` and fill it with links to the required scrips (from the `simulation_default_files/` dir) and links to the data folder. 
 
 
 ## Running IGM with paleo data
-Before running IGM, it must also be installed ([see IGM wiki](https://github.com/jouvetg/igm/wiki/1.-Installation)). Installing IGM on a separate conda environment is recommended. 
-
-Define your `params.json` and run the script `paleo_igm.sh` with data and file structure in the example above.
+Redefine your `params.json` and run the script `paleo_igm.sh` with data and file structure in the example above.
 
 ## Custom Modules
 The `modules_custom` directory contains custom modules that are used by IGM to load the paleo climate data inputs. These modules include:
-- `clim_pism.py`: A module for handling climate data from PISM.
-- `plot_smb.py`: A module for plotting surface mass balance data.
-- `plot-climate-forcing.py`: A module for plotting climate forcing data.
-- `smb_pism.py`: A module for calculating surface mass balance using data in the PISM format.
+- `paleo_clim.py`: A module for initializing and updating the paleo climate variables using the Glacial Index Method.
+- `paleo_smb.py`: A module for calculating surface mass balance.  
+
+### Climate module: `paleo_clim.py`
+//TODO
+
+### Surface Mass Balance: `paleo_smb.py`
+//TODO
