@@ -197,6 +197,12 @@ def main():
     
     print(f"Found {len(files)} files to process.")
     print(f"Target CRS: {target_crs if target_crs else 'Using CRS from input files'}")
+
+    #TODO: make an array here of ice extent in m^2 then plot it at and and save the plot
+    # ice extent m^2 is returned for each file under
+    # ice volume will be gotten from the get_ice_volume_array.py that will look up the log file.
+    # the plot_ice_extent_variables.py will take the two vars above as input and save a plot. 
+    # TODO: consicer having a "post_process.py" that calls the ice thinckness outline extractor etc
     
     # Process each file
     for file_path in files:
