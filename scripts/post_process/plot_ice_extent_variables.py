@@ -2,13 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=None, 
-                         title="Ice Extent and Volume Over Time", 
-                         xlabel="Time", ylabel_area="Ice Extent Area", 
-                         ylabel_volume="Ice Volume", figsize=(15, 8), save_path=None,
-                         downsample_factor=None, show_trend=True, dual_axis=True):
+                              title="Ice Extent and Volume Over Time", 
+                              xlabel="Time", ylabel_area="Ice Extent Area", 
+                              ylabel_volume="Ice Volume", figsize=(15, 8), 
+                              save_path=None, downsample_factor=None, show_trend=True):
     """
-    Plot ice extent areas and optionally ice volumes as a time series.
-    Optimized for large datasets (100k+ points).
+    Plot ice extent areas and optionally ice volumes on dual y-axes.
     
     Parameters:
     -----------
@@ -17,7 +16,7 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
     ice_volumes : array-like, optional
         Array of ice volume values (same length as ice_extent_areas)
     time_data : array-like, optional
-        Time data (years, dates, etc.) for x-axis. If None, uses indices.
+        Time data for x-axis. If None, uses indices.
     title : str
         Plot title
     xlabel : str
@@ -31,46 +30,20 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
     save_path : str, optional
         Path to save the plot. If None, plot is shown but not saved.
     downsample_factor : int, optional
-        Factor to downsample data for plotting (e.g., 10 means plot every 10th point)
-        If None, auto-determines based on data size
+        Factor to downsample data for plotting. If None, auto-determines.
     show_trend : bool
-        Whether to show trend line
-    dual_axis : bool
-        Whether to use dual y-axis (True) or separate subplots (False)
+        Whether to show trend lines
     """
-    
-    # Debug data issues
-    print(f"DEBUG: Ice extent areas - shape: {ice_extent_areas.shape}, min: {np.min(ice_extent_areas)}, max: {np.max(ice_extent_areas)}")
-    print(f"DEBUG: Ice extent areas - first 10 values: {ice_extent_areas[:10]}")
-    if ice_volumes is not None:
-        print(f"DEBUG: Ice volumes - shape: {ice_volumes.shape}, min: {np.min(ice_volumes)}, max: {np.max(ice_volumes)}")
-        print(f"DEBUG: Ice volumes - first 10 values: {ice_volumes[:10]}")
-    if time_data is not None:
-        print(f"DEBUG: Time data - length: {len(time_data)}, first 10 values: {time_data[:10]}")
-        
-        # Check if time data needs sorting
-        if len(time_data) > 1:
-            time_array = np.array(time_data)
-            if isinstance(time_data[0], str):
-                # Convert string years to integers for sorting
-                time_numeric = np.array([int(t) for t in time_data])
-                print(f"DEBUG: Time data as numbers - min: {np.min(time_numeric)}, max: {np.max(time_numeric)}")
-                print(f"DEBUG: Time data sorted? {np.all(time_numeric[:-1] <= time_numeric[1:])}")
-            else:
-                print(f"DEBUG: Time data - min: {np.min(time_array)}, max: {np.max(time_array)}")
-                print(f"DEBUG: Time data sorted? {np.all(time_array[:-1] <= time_array[1:])}")
     
     # Auto-determine downsampling for large datasets
     data_size = len(ice_extent_areas)
     if downsample_factor is None:
         if data_size > 50000:
-            downsample_factor = max(1, data_size // 10000)  # Target ~10k points
+            downsample_factor = max(1, data_size // 10000)
         elif data_size > 10000:
-            downsample_factor = max(1, data_size // 5000)   # Target ~5k points
+            downsample_factor = max(1, data_size // 5000)
         else:
             downsample_factor = 1
-    
-    print(f"Plotting {data_size} data points with downsample factor: {downsample_factor}")
     
     # Downsample data if needed
     if downsample_factor > 1:
@@ -83,36 +56,21 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
         ice_volumes_plot = ice_volumes
         time_data_plot = time_data
     
-    # Determine if we're plotting one or two variables
-    plot_volume = ice_volumes is not None
-    
-    # Check if ice_volumes has data
-    if plot_volume:
-        if len(ice_volumes_plot) == 0:
-            print("Warning: Ice volumes array is empty, skipping volume plot")
-            plot_volume = False
-        elif len(ice_volumes_plot) != len(ice_extent_areas_plot):
-            print(f"Warning: Ice volumes length ({len(ice_volumes_plot)}) doesn't match ice extent length ({len(ice_extent_areas_plot)})")
-            print("Skipping volume plot")
-            plot_volume = False
-    
-    # Create x-axis data
+    # Prepare x-axis data
     if time_data_plot is not None:
         x = time_data_plot
-        # Convert string years to numbers if needed
-        if isinstance(x[0], str):
-            x = [int(year) for year in x]
     else:
         x = np.arange(len(ice_extent_areas_plot))
     
-    # Create figure
-    fig, ax1 = plt.subplots(figsize=figsize)
-    
-    # Plot ice extent areas on primary axis
+    # Set up plotting style
     line_style = '-'
     marker_style = 'o' if data_size <= 1000 else None
     markersize = 4 if data_size <= 1000 else 0
     
+    # Create figure and primary axis
+    fig, ax1 = plt.subplots(figsize=figsize)
+    
+    # Plot ice extent areas on primary axis
     color1 = 'steelblue'
     ax1.plot(x, ice_extent_areas_plot, linewidth=2, color=color1, 
              linestyle=line_style, marker=marker_style, markersize=markersize, 
@@ -124,7 +82,7 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
     ax1.grid(True, alpha=0.3)
     
     # Add statistics for ice extent
-    mean_area = np.nanmean(ice_extent_areas)  # Use nanmean to handle NaN values
+    mean_area = np.nanmean(ice_extent_areas)
     min_area = np.nanmin(ice_extent_areas)
     max_area = np.nanmax(ice_extent_areas)
     std_area = np.nanstd(ice_extent_areas)
@@ -133,8 +91,11 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
     if downsample_factor > 1:
         stats_text_area += f'\n(Every {downsample_factor}th point)'
     
+    ax1.text(0.02, 0.98, stats_text_area, transform=ax1.transAxes, 
+             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
     # Plot ice volumes on secondary axis if provided
-    if plot_volume and dual_axis:
+    if ice_volumes is not None and len(ice_volumes) > 0:
         ax2 = ax1.twinx()
         color2 = 'crimson'
         
@@ -155,7 +116,6 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
         if downsample_factor > 1:
             stats_text_volume += f'\n(Every {downsample_factor}th point)'
         
-        # Position volume stats on the right side
         ax2.text(0.98, 0.98, stats_text_volume, transform=ax2.transAxes, 
                  verticalalignment='top', horizontalalignment='right',
                  bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
@@ -183,16 +143,12 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
         # Create combined legend
         lines1, labels1 = ax1.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
-    
-    # Position extent stats on the left side
-    ax1.text(0.02, 0.98, stats_text_area, transform=ax1.transAxes, 
-             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='center left')
     
     # Set title
     ax1.set_title(title, fontsize=16, fontweight='bold')
     
-    # Format x-axis for large datasets
+    # Format x-axis for readability
     if len(x) > 20:
         ax1.tick_params(axis='x', rotation=45)
     
@@ -200,41 +156,5 @@ def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=Non
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Plot saved to: {save_path}")
     
-    plt.show()
-    
-    # Return debugging info
-    return {
-        'ice_extent_stats': {'mean': mean_area, 'min': min_area, 'max': max_area, 'std': std_area},
-        'ice_volume_stats': {'mean': mean_volume, 'min': min_volume, 'max': max_volume, 'std': std_volume} if plot_volume else None,
-        'time_range': {'min': np.min(x), 'max': np.max(x)} if time_data is not None else None
-    }
-
-# Additional function for interactive exploration of large datasets
-def plot_ice_extent_interactive(ice_extent_areas, ice_volumes=None, time_data=None, window_size=1000):
-    """
-    Create an interactive plot function for exploring large datasets in chunks.
-    
-    Parameters:
-    -----------
-    window_size : int
-        Number of data points to show in each window
-    """
-    
-    def plot_window(start_idx=0):
-        end_idx = min(start_idx + window_size, len(ice_extent_areas))
-        
-        area_window = ice_extent_areas[start_idx:end_idx]
-        volume_window = ice_volumes[start_idx:end_idx] if ice_volumes is not None else None
-        time_window = time_data[start_idx:end_idx] if time_data is not None else None
-        
-        title = f"Ice Data (Points {start_idx} to {end_idx-1} of {len(ice_extent_areas)})"
-        
-        plot_ice_extent_areas(area_window, volume_window, time_window, 
-                             title=title, downsample_factor=1, show_trend=False)
-        
-        print(f"Showing window {start_idx}-{end_idx}. Use plot_window({end_idx}) for next window.")
-    
-    return plot_window
-
+    #plt.show()
