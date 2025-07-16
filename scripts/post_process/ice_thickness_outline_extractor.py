@@ -3,7 +3,7 @@
 """
 Ice Thickness Outline Extractor Version 2 (Testing)
 
-This script processes ice thickness GeoTIFF files (thk-*.tif) in a specified folder,
+Thisscript processes ice thickness GeoTIFF files (thk-*.tif) in a specified folder,
 extracts outlines where ice exists (non-zero values), and saves them as shapefiles
 for use in ArcGIS.
 
@@ -34,6 +34,9 @@ import numpy as np
 from rasterio import features
 import geopandas as gpd
 from shapely.geometry import shape
+
+from plot_ice_extent_variables import plot_ice_extent_and_volume
+from get_ice_volume_array import get_ice_volumes_with_path
 
 def extract_year_from_filename(filename):
     """Extract year from filename following the pattern thk-XXXXX.tif."""
@@ -155,6 +158,7 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
     # Save as shapefile, explicitly setting the CRS
     gdf.to_file(output_path, driver="ESRI Shapefile")
     print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
+    return total_area_km2 
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -203,13 +207,27 @@ def main():
     # ice volume will be gotten from the get_ice_volume_array.py that will look up the log file.
     # the plot_ice_extent_variables.py will take the two vars above as input and save a plot. 
     # TODO: consicer having a "post_process.py" that calls the ice thinckness outline extractor etc
+
+    # Get extent area and volumes for plot
+    total_time_steps  = len(files)
+    ice_extent_areas = np.empty(total_time_steps)
+    ice_volumes = get_ice_volumes_with_path(log_dir=os.path.join(input_folder, ".."))
+    years = []
     
     # Process each file
-    for file_path in files:
-        process_tif_file(file_path, output_folder, input_crs, threshold=threshold, target_crs=target_crs)
+    for i, file_path in enumerate(files):
+        ice_extent_area = process_tif_file(file_path, output_folder, input_crs, threshold=threshold, target_crs=target_crs)
+        ice_extent_areas[i] = ice_extent_area
+
+        file_base_name = os.path.basename(file_path)
+        current_year_string = extract_year_from_filename(file_base_name)
+        years.append(current_year_string)
         print(" ")
     
     print("Processing complete!")
+
+    # Plot extent and volume through time 
+    plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=ice_volumes, time_data=years, save_path=output_folder)
 
 if __name__ == "__main__":
     main()
