@@ -154,6 +154,7 @@ The glacial index method is a climate forcing approach taking the present day cl
 There are three components to the method, the present day observed climate from CHELSA ($X_{obs}$), the modeled anomaly from PMIP6 ($\Delta X$), and the delta temperature signal obtained from ice sheet cores. The temperature signal is converted to a glacial index ($G$), by setting LGM as 0 and present day to 1 in a normalised scale. This way the temperature and precipitation are interpolated linearly between the two climate states.
 
 The modeled anomaly ($\delta X) is derived from climate model data at the LCM ($X_{LGM}$) and historical present 1950-2010 ($X_{PI}$):
+
 $$\Delta X = X_{PI} - X_{LGM}$$
 
 Each variable is calculated in the same way: 
