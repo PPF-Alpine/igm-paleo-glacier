@@ -212,7 +212,7 @@ def main():
     total_time_steps  = len(files)
     ice_extent_areas = np.empty(total_time_steps)
     ice_volumes = get_ice_volumes_with_path(log_dir=os.path.join(input_folder, ".."))
-    years = []
+    years_int = []
     
     # Process each file
     for i, file_path in enumerate(files):
@@ -221,13 +221,28 @@ def main():
 
         file_base_name = os.path.basename(file_path)
         current_year_string = extract_year_from_filename(file_base_name)
-        years.append(current_year_string)
+        years_int.append(int(current_year_string))
         print(" ")
     
     print("Processing complete!")
 
+    print(f"Years before sorting: {years_int}")
+
+    # Get sorting indices
+    sort_indices = np.argsort(years_int)
+    print(f"Sort indices: {sort_indices}")
+
+    # Sort all arrays by time
+    years_sorted = np.array(years_int)[sort_indices]
+    ice_extent_areas_sorted = ice_extent_areas[sort_indices]
+    ice_volumes_sorted = ice_volumes[sort_indices]
+
+    print(f"Years after sorting: {[int(y) for y in years_sorted]}")
+    print(f"Ice extent after sorting: {ice_extent_areas_sorted}")
+    print(f"Ice volumes after sorting: {ice_volumes_sorted}")
+
     # Plot extent and volume through time 
-    plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=ice_volumes, time_data=years, save_path=output_folder)
+    plot_ice_extent_and_volume(ice_extent_areas_sorted, ice_volumes=ice_volumes_sorted, time_data=years_sorted, save_path=output_folder)
 
 if __name__ == "__main__":
     main()
