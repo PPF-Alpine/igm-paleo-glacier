@@ -14,13 +14,14 @@ logger = logging.getLogger(__name__)
 
 EPICA_URL = "ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/antarctica/epica_domec/edc3deuttemp2007.txt"
 
-def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
+def epica_to_netcdf(epica_dir: Path, output_filepath: Path, amplification_factor=0.5, plot=False):
     """
     Convert EPICA data to yearly netCDF data.
 
     Args:
         epica_filepath (Path): The file path of the EPICA data file.
         output_filepath (Path): The file path to save the netCDF output.
+        amplification_factor (float): The adjustment factor for polar amplification.
         plot (bool, optional): Whether to plot the data. Defaults to False.
     """
     logger.info("Reading EPICA data into list.")
@@ -44,7 +45,7 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     delta_T = interp_func(d_t_range)
 
     # Adjust for polar amplification factor 0.5 (Hansen et al. 2013 cited in https://biogeography.pensoft.net/article/135871/element/4/437//)
-    delta_T = delta_T * 0.5 
+    delta_T = delta_T * amplification_factor 
 
     # Create xray Dataset
     logger.info("Creating xarray Dataset from numpy array.")
