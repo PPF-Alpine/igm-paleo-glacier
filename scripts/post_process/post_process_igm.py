@@ -10,7 +10,7 @@ import geopandas as gpd
 from shapely.geometry import shape
 
 from post_processing_scripts import (
-    # save_result_as_csv, 
+    save_results_as_csv, 
     extract_outline_as_shapefile,
     # plot_ice_extent_and_volume,     
 )
@@ -54,7 +54,7 @@ def main():
     extract_outline_as_shapefile(input_folder, output_folder, input_crs, target_crs, threshold)
 
     # Extract the result data for extent and volume and create a csv file 
-    # save_result_as_csv(output_folder)
+    save_results_as_csv(path_to_logfile=os.path.join(input_folder, ".."), shape_files_path=output_folder, output_folder=os.path.join(input_folder, ".."))
 
     # Plot the results 
     # plot_ice_extent_and_volume()

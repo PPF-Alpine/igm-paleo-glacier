@@ -29,12 +29,13 @@ def get_ice_volumes_with_path(log_dir=None):
         print("No suitable .log files found")
         all_files = os.listdir(log_dir)
         print(f"All files in {log_dir}: {all_files}")
-        return np.array([])
+        return np.array([]), np.array([])
     
     # Pattern to match IGM lines with timestamp
     igm_pattern = r'IGM\s+\d{2}:\d{2}:\d{2}\s+:'
     
-    values = []
+    years = []
+    volumes = []
     
     for log_file in log_files:
         print(f"Processing log file: {log_file}")
@@ -46,21 +47,34 @@ def get_ice_volumes_with_path(log_dir=None):
                     line_count += 1
                     if re.search(igm_pattern, line):
                         matching_lines += 1
-                        # Split line and get the last element
-                        parts = line.strip().split()
-                        if parts:
-                            try:
-                                # Convert last value to float
-                                last_value = float(parts[-1])
-                                values.append(last_value)
-                            except ValueError:
-                                # Skip lines where last value isn't a number
-                                print(f"Could not convert last value to float in line: {line.strip()}")
-                                continue
+                        # Split line by | and get parts
+                        if '|' in line:
+                            parts = line.split('|')
+                            if len(parts) >= 4:
+                                try:
+                                    # Extract year (second column) and volume (last column)
+                                    year = int(float(parts[1].strip()))
+                                    volume = float(parts[3].strip())
+                                    years.append(year)
+                                    volumes.append(volume)
+                                except ValueError:
+                                    print(f"Could not parse year/volume in line: {line.strip()}")
+                                    continue
+                        else:
+                            # Fallback to original method if no | separator
+                            parts = line.strip().split()
+                            if parts:
+                                try:
+                                    volume = float(parts[-1])
+                                    volumes.append(volume)
+                                    # You'd need to extract year differently here
+                                except ValueError:
+                                    print(f"Could not convert last value to float in line: {line.strip()}")
+                                    continue
                 print(f"Processed {line_count} lines, found {matching_lines} matching IGM lines")
         except IOError:
             print(f"Could not read file: {log_file}")
             continue
     
-    print(f"Total values extracted: {len(values)}")
-    return np.array(values)
+    print(f"Total values extracted: {len(volumes)}")
+    return np.array(years), np.array(volumes)

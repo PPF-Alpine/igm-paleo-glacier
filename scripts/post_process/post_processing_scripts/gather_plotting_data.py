@@ -1,5 +1,6 @@
 from pathlib import Path
 import geopandas as gpd
+import pandas as pd
 import os
 import glob
 
@@ -11,9 +12,32 @@ def save_results_as_csv(path_to_logfile: Path, shape_files_path: Path, output_fo
     extent_area_and_time = extract_shapefile_data(shape_files_path)
     
     # get the volume
-    ice_volume_array = get_ice_volume_with_path(path_to_logfile)
+    years, ice_volume_array = get_ice_volumes_with_path(path_to_logfile)
 
-    # Combine to csv file
+
+    print(f"ext: {extent_area_and_time}")
+    print(f"vol: {ice_volume_array}")
+    print(f"yer: {years}")
+
+    # Create pandas DataFrame and combine the two data sets
+    volume_df = pd.DataFrame({
+        'time': years, 
+        'volume': ice_volume_array
+    })
+    extent_df = pd.DataFrame(extent_area_and_time, columns=['filename', 'time', 'extent'])
+
+    # Merge extent and volume in one DataFrame
+    extent_and_volume_df = pd.merge(volume_df, extent_df[['time', 'extent']], on='time', how='left')
+
+    # Fill missing extent values with 0
+    extent_and_volume_df['extent'] = extent_and_volume_df['extent'].fillna(0.0)
+
+    # Reorder the columns
+    final_df = extent_and_volume_df[['time', 'volume', 'extent']]
+
+    # Save to csv file  
+    final_df.to_csv(Path(output_folder) / "glacier_extent_and_volume.csv")
+
 
 
 # data = extract_shapefile_data("/path/to/your/shapefiles")
