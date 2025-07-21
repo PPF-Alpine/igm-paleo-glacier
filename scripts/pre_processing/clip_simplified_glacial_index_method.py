@@ -49,7 +49,8 @@ def clip_data(args: argparse.Namespace):
 def convert_epica_to_netcdf(args: argparse.Namespace):
     if not (LOCATION_BASE_PATH / args.output_dir / args.dT_epica_filename).exists():
         epica_to_netcdf(
-            epica_dir=Path(CLIMATE_DATA_PATH / "epica"), output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.dT_epica_filename), arg.polar_amplification,
+            epica_dir=Path(CLIMATE_DATA_PATH / "epica"), 
+            output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.dT_epica_filename),
         )
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:

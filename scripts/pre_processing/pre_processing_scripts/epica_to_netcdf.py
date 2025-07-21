@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 EPICA_URL = "ftp://ftp.ncdc.noaa.gov/pub/data/paleo/icecore/antarctica/epica_domec/edc3deuttemp2007.txt"
 
-def epica_to_netcdf(epica_dir: Path, output_filepath: Path, amplification_factor=0.5, plot=False):
+def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     """
     Convert EPICA data to yearly netCDF data.
 
@@ -43,9 +43,6 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, amplification_factor
 
     # Interpolate the temperature at the given time using vectorized approach
     delta_T = interp_func(d_t_range)
-
-    # Adjust for polar amplification factor 0.5 (Hansen et al. 2013 cited in https://biogeography.pensoft.net/article/135871/element/4/437//)
-    delta_T = delta_T * amplification_factor 
 
     # Create xray Dataset
     logger.info("Creating xarray Dataset from numpy array.")

@@ -36,7 +36,7 @@ def params(parser):
     parser.add_argument(
         "--delta_temperature_file",
         type=str,
-        default="dT_composite_at_latitude.nc",
+        default="dT_epica.nc",
         help="Name of (1) EPICA or (2) Latitudinally weighted Core Composites input file. Both are delta temperature time series for the climate outside the given time frame (delta_temp), unit: years",
     )
     parser.add_argument(
@@ -49,6 +49,12 @@ def params(parser):
         "--LGM_precip_adjustment", 
         help="The adjusment factor for LGM preciptiation, defaults to 0.5", 
         type=float, 
+        default=0.5,
+    )
+    parser.add_argument(
+        "--polar_amplification_adjustment",
+        help="Ajustment factor for the polar amplification. Defaults to 0.5 as is the global mean around the equator.",
+        type=float,
         default=0.5,
     )
     parser.add_argument(
@@ -91,7 +97,11 @@ def initialize(params, state):
     delta_temperature_signal = Dataset(os.path.join("./data/", params.delta_temperature_file))
 
     # Access the variable data as numpy arrays
-    delta_T_data = np.squeeze(delta_temperature_signal.variables['delta_T'][:])
+    delta_T_raw = np.squeeze(delta_temperature_signal.variables['delta_T'][:])
+
+    # Adjust for polar amplification:
+    delta_T_data = delta_T_raw * params.polar_amplification_adjustment 
+
     time_data = np.squeeze(delta_temperature_signal.variables['time'][:])
     state.delta_temperature_time_data = time_data
 

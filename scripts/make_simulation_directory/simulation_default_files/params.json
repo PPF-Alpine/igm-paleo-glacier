@@ -2,7 +2,7 @@
   "modules_preproc": [
     "load_ncdf"
   ],
-  "modules_process": ["paleo_clim",
+  "modules_process": ["simplified_glacial_index_clim",
                       "paleo_smb",
                       "iceflow",
                       "time",
@@ -17,6 +17,7 @@
                        "print_comp"
                       ],
   "lncd_input_file": "data/topography.nc",
+  "delta_temperature_file" : "dT_epica.nc",
    "wncd_vars_to_save": [
     "topg",
     "thk",
@@ -27,6 +28,8 @@
   "time_start": -129050.0,
   "time_end": 1950.0,
   "time_save": 1000.0,
+  "LGM_precip_adjustment" : 0.5,
+  "polar_amplification_adjustment" : 0.5,
   "precipitation_scaling": 1,
   "temperature_scaling": 1 
 }
