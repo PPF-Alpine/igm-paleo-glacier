@@ -156,14 +156,12 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
     # Save as shapefile, explicitly setting the CRS
     gdf.to_file(output_path, driver="ESRI Shapefile")
     print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
-    return total_area_km2 
+    print(" ")
 
 def extract_outline_as_shapefile(input_folder: Path, output_folder: Path, input_crs: str, target_crs: str, threshold = 2.0):
 
-    # Validate input folder
-    if not os.path.isdir(input_folder):
-        print(f"Error: {input_folder} is not a valid directory.")
-        return
+    ice_thinkness_file_name_pattern  = os.path.join(input_folder, "thk-*.tif")
+    files = glob(ice_thinkness_file_name_pattern)
     
     if not files:
         print(f"No files matching the pattern 'thk-*.tif' found in {input_folder}")
@@ -172,38 +170,12 @@ def extract_outline_as_shapefile(input_folder: Path, output_folder: Path, input_
     print(f"Found {len(files)} files to process.")
     print(f"Target CRS: {target_crs if target_crs else 'Using CRS from input files'}")
 
-    total_time_steps  = len(files)
-    ice_extent_areas = np.empty(total_time_steps)
-    ice_volumes = get_ice_volumes_with_path(log_dir=os.path.join(input_folder, ".."))
-    years_int = []
     
     # Process each file
-    for i, file_path in enumerate(files):
+    for file_path in files:
         ice_extent_area = process_tif_file(file_path, output_folder, input_crs, threshold=threshold, target_crs=target_crs)
-        ice_extent_areas[i] = ice_extent_area
-
-        file_base_name = os.path.basename(file_path)
-        current_year_string = extract_year_from_filename(file_base_name)
-        years_int.append(int(current_year_string))
-        print(" ")
     
-    print("Processing complete!")
+    print("Processing tif to shapefiles complete!")
 
-    print(f"Years before sorting: {years_int}")
 
-    # Get sorting indices
-    sort_indices = np.argsort(years_int)
-    print(f"Sort indices: {sort_indices}")
-
-    # Sort all arrays by time
-    years_sorted = np.array(years_int)[sort_indices]
-    ice_extent_areas_sorted = ice_extent_areas[sort_indices]
-    ice_volumes_sorted = ice_volumes[sort_indices]
-
-    print(f"Years after sorting: {[int(y) for y in years_sorted]}")
-    print(f"Ice extent after sorting: {ice_extent_areas_sorted}")
-    print(f"Ice volumes after sorting: {ice_volumes_sorted}")
-
-    # Plot extent and volume through time 
-    plot_ice_extent_and_volume(ice_extent_areas_sorted, ice_volumes=ice_volumes_sorted, time_data=years_sorted, save_path=output_folder)
 
