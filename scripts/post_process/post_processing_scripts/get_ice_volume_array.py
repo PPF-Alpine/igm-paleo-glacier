@@ -10,7 +10,7 @@ def get_ice_volumes_with_path(log_dir=None):
     and returns them as a numpy array.
     """
     if log_dir is None:
-        # Default to parent directory of script
+    # Default to parent directory of script
         script_dir = os.path.dirname(os.path.abspath(__file__))
         log_dir = os.path.dirname(script_dir)
     

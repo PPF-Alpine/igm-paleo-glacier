@@ -50,8 +50,8 @@ def main():
     extract_outline_as_shapefile(input_folder, output_folder, input_crs, target_crs, threshold)
 
     # Extract the result data for extent and volume and create a csv file 
-    save_result_as_csv()
+    # save_result_as_csv(output_folder)
 
     # Plot the results 
-    plot_ice_extent_and_volume()
+    # plot_ice_extent_and_volume()
 

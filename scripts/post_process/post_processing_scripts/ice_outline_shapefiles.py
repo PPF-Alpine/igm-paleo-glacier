@@ -36,9 +36,6 @@ from rasterio import features
 import geopandas as gpd
 from shapely.geometry import shape
 
-from plot_ice_extent_variables import plot_ice_extent_and_volume
-from get_ice_volume_array import get_ice_volumes_with_path
-
 def extract_year_from_filename(filename):
     """Extract year from filename following the pattern thk-XXXXX.tif."""
     match = re.search(r'thk-(-?\d+)', filename)
