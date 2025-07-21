@@ -97,7 +97,7 @@ def initialize(params, state):
 
 
     # Get the LGM_precip_adjustment:
-    state.pr_adj_LGM = LGM_precip_adjustment
+    state.pr_adj_LGM = params.LGM_precip_adjustment
 
     # Find minimum temperature, corresponding to the 0 value in the glacial index
     #TODO: This should perhaps be set to a spesific LGM year e.g. 21000 BP
