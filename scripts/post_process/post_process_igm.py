@@ -12,7 +12,7 @@ from shapely.geometry import shape
 from post_processing_scripts import (
     save_results_as_csv, 
     extract_outline_as_shapefile,
-    # plot_ice_extent_and_volume,     
+    plot_volume_extent_time,     
 )
 
 def parse_arguments():
@@ -57,7 +57,7 @@ def main():
     save_results_as_csv(path_to_logfile=os.path.join(input_folder, ".."), shape_files_path=output_folder, output_folder=os.path.join(input_folder, ".."))
 
     # Plot the results 
-    # plot_ice_extent_and_volume()
+    plot_volume_extent_time(os.path.join(input_folder, "../glacier_extent_and_volume.csv"), save_path=os.path.join(input_folder, ".."))
 
 
 if __name__ == "__main__":

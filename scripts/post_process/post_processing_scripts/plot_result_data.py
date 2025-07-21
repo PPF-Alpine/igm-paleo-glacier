@@ -1,160 +1,138 @@
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_ice_extent_and_volume(ice_extent_areas, ice_volumes=None, time_data=None, 
-                              title="Ice Extent and Volume Over Time", 
-                              xlabel="Time", ylabel_area="Ice Extent Area", 
-                              ylabel_volume="Ice Volume", figsize=(15, 8), 
-                              save_path=None, downsample_factor=None, show_trend=True):
+def plot_volume_extent_time(csv_path, time_resolution=1, polynomial_degree=3, 
+                           figsize=(12, 8), save_path=None):
     """
-    Plot ice extent areas and optionally ice volumes on dual y-axes.
+    Plot volume and extent over time from CSV data with dual y-axes and polynomial trends.
     
     Parameters:
     -----------
-    ice_extent_areas : array-like
-        Array of ice extent area values
-    ice_volumes : array-like, optional
-        Array of ice volume values (same length as ice_extent_areas)
-    time_data : array-like, optional
-        Time data for x-axis. If None, uses indices.
-    title : str
-        Plot title
-    xlabel : str
-        X-axis label
-    ylabel_area : str
-        Y-axis label for ice extent area
-    ylabel_volume : str
-        Y-axis label for ice volume
-    figsize : tuple
+    csv_path : str
+        Path to the CSV file
+    time_resolution : int, default=1
+        Show every nth time point (1 = all points, 2 = every other point, etc.)
+    polynomial_degree : int, default=3
+        Degree of polynomial for trend lines
+    figsize : tuple, default=(12, 8)
         Figure size (width, height)
     save_path : str, optional
-        Path to save the plot. If None, plot is shown but not saved.
-    downsample_factor : int, optional
-        Factor to downsample data for plotting. If None, auto-determines.
-    show_trend : bool
-        Whether to show trend lines
+        Path to save the plot (if None, only displays)
+    
+    Returns:
+    --------
+    fig, (ax1, ax2) : matplotlib figure and axes objects
     """
     
-    # Auto-determine downsampling for large datasets
-    data_size = len(ice_extent_areas)
-    if downsample_factor is None:
-        if data_size > 50000:
-            downsample_factor = max(1, data_size // 10000)
-        elif data_size > 10000:
-            downsample_factor = max(1, data_size // 5000)
-        else:
-            downsample_factor = 1
+    # Read the CSV file
+    try:
+        df = pd.read_csv(csv_path, index_col=0)
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+        return None, None
     
-    # Downsample data if needed
-    if downsample_factor > 1:
-        indices = np.arange(0, data_size, downsample_factor)
-        ice_extent_areas_plot = ice_extent_areas[indices]
-        ice_volumes_plot = ice_volumes[indices] if ice_volumes is not None else None
-        time_data_plot = np.array(time_data)[indices] if time_data is not None else None
-    else:
-        ice_extent_areas_plot = ice_extent_areas
-        ice_volumes_plot = ice_volumes
-        time_data_plot = time_data
+    # Apply time resolution filter
+    df_filtered = df.iloc[::time_resolution].copy()
     
-    # Prepare x-axis data
-    if time_data_plot is not None:
-        x = time_data_plot
-    else:
-        x = np.arange(len(ice_extent_areas_plot))
+    # Extract data
+    time = df_filtered['time'].values
+    volume = df_filtered['volume'].values
+    extent = df_filtered['extent'].values
     
-    # Set up plotting style
-    line_style = '-'
-    marker_style = 'o' if data_size <= 1000 else None
-    markersize = 4 if data_size <= 1000 else 0
+    # Remove any NaN values
+    mask = ~(np.isnan(time) | np.isnan(volume) | np.isnan(extent))
+    time = time[mask]
+    volume = volume[mask]
+    extent = extent[mask]
     
-    # Create figure and primary axis
+    if len(time) == 0:
+        print("No valid data points found after filtering")
+        return None, None
+    
+    # Create the plot with dual y-axes
     fig, ax1 = plt.subplots(figsize=figsize)
+    ax2 = ax1.twinx()
     
-    # Plot ice extent areas on primary axis
-    color1 = 'steelblue'
-    ax1.plot(x, ice_extent_areas_plot, linewidth=2, color=color1, 
-             linestyle=line_style, marker=marker_style, markersize=markersize, 
-             label='Ice Extent Area', alpha=0.8)
-    
-    ax1.set_xlabel(xlabel, fontsize=12)
-    ax1.set_ylabel(ylabel_area, fontsize=12, color=color1)
+    # Plot volume on left y-axis
+    color1 = 'tab:blue'
+    ax1.set_xlabel('Time (years)', fontsize=12)
+    ax1.set_ylabel('Volume (km³)', color=color1, fontsize=12)
+    line1 = ax1.plot(time, volume, color=color1, linewidth=1.5, marker='o', 
+                     markersize=3, label='Volume data')
     ax1.tick_params(axis='y', labelcolor=color1)
     ax1.grid(True, alpha=0.3)
     
-    # Add statistics for ice extent
-    mean_area = np.nanmean(ice_extent_areas)
-    min_area = np.nanmin(ice_extent_areas)
-    max_area = np.nanmax(ice_extent_areas)
-    std_area = np.nanstd(ice_extent_areas)
+    # Plot extent on right y-axis
+    color2 = 'tab:red'
+    ax2.set_ylabel('Extent (km²)', color=color2, fontsize=12)
+    line2 = ax2.plot(time, extent, color=color2, linewidth=1.5, marker='o', 
+                     markersize=3, label='Extent data')
+    ax2.tick_params(axis='y', labelcolor=color2)
     
-    stats_text_area = f'Ice Extent:\nMean: {mean_area:.2f}\nMin: {min_area:.2f}\nMax: {max_area:.2f}\nStd: {std_area:.2f}'
-    if downsample_factor > 1:
-        stats_text_area += f'\n(Every {downsample_factor}th point)'
+    # Fit and plot polynomial trends using numpy
+    if len(time) > polynomial_degree:
+        # Generate smooth curve for trends
+        time_smooth = np.linspace(time.min(), time.max(), 300)
+        
+        # Fit polynomial coefficients
+        volume_coeffs = np.polyfit(time, volume, polynomial_degree)
+        extent_coeffs = np.polyfit(time, extent, polynomial_degree)
+        
+        # Generate trend lines
+        volume_trend = np.polyval(volume_coeffs, time_smooth)
+        extent_trend = np.polyval(extent_coeffs, time_smooth)
+        
+        # Plot trend lines
+        ax1.plot(time_smooth, volume_trend, color=color1, linewidth=2, 
+                linestyle='--', alpha=0.8, label=f'Volume trend (poly {polynomial_degree})')
+        ax2.plot(time_smooth, extent_trend, color=color2, linewidth=2, 
+                linestyle='--', alpha=0.8, label=f'Extent trend (poly {polynomial_degree})')
+    else:
+        print(f"Warning: Not enough data points for polynomial degree {polynomial_degree}")
     
-    ax1.text(0.02, 0.98, stats_text_area, transform=ax1.transAxes, 
-             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    # Formatting
+    plt.title(f'Volume and Extent Over Time\n(Time resolution: every {time_resolution} point(s))', 
+              fontsize=14, pad=20)
     
-    # Plot ice volumes on secondary axis if provided
-    if ice_volumes is not None and len(ice_volumes) > 0:
-        ax2 = ax1.twinx()
-        color2 = 'crimson'
-        
-        ax2.plot(x, ice_volumes_plot, linewidth=2, color=color2, 
-                 linestyle=line_style, marker=marker_style, markersize=markersize, 
-                 label='Ice Volume', alpha=0.8)
-        
-        ax2.set_ylabel(ylabel_volume, fontsize=12, color=color2)
-        ax2.tick_params(axis='y', labelcolor=color2)
-        
-        # Add statistics for ice volume
-        mean_volume = np.nanmean(ice_volumes)
-        min_volume = np.nanmin(ice_volumes)
-        max_volume = np.nanmax(ice_volumes)
-        std_volume = np.nanstd(ice_volumes)
-        
-        stats_text_volume = f'Ice Volume:\nMean: {mean_volume:.2f}\nMin: {min_volume:.2f}\nMax: {max_volume:.2f}\nStd: {std_volume:.2f}'
-        if downsample_factor > 1:
-            stats_text_volume += f'\n(Every {downsample_factor}th point)'
-        
-        ax2.text(0.98, 0.98, stats_text_volume, transform=ax2.transAxes, 
-                 verticalalignment='top', horizontalalignment='right',
-                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        
-        # Add trend lines if requested
-        if show_trend and len(x) > 10:
-            # Trend for ice extent
-            valid_extent = ~np.isnan(ice_extent_areas_plot)
-            if np.sum(valid_extent) > 1:
-                z = np.polyfit(np.arange(len(ice_extent_areas_plot))[valid_extent], 
-                              ice_extent_areas_plot[valid_extent], 1)
-                p = np.poly1d(z)
-                ax1.plot(x, p(np.arange(len(ice_extent_areas_plot))), 
-                        color=color1, linestyle="--", alpha=0.8, linewidth=2, label='Extent Trend')
-            
-            # Trend for ice volume
-            valid_volume = ~np.isnan(ice_volumes_plot)
-            if np.sum(valid_volume) > 1:
-                z_vol = np.polyfit(np.arange(len(ice_volumes_plot))[valid_volume], 
-                                  ice_volumes_plot[valid_volume], 1)
-                p_vol = np.poly1d(z_vol)
-                ax2.plot(x, p_vol(np.arange(len(ice_volumes_plot))), 
-                        color=color2, linestyle="--", alpha=0.8, linewidth=2, label='Volume Trend')
-        
-        # Create combined legend
-        lines1, labels1 = ax1.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(lines1 + lines2, labels1 + labels2, loc='center left')
+    # Format x-axis for better readability
+    ax1.ticklabel_format(style='plain', axis='x')
     
-    # Set title
-    ax1.set_title(title, fontsize=16, fontweight='bold')
+    # Add legends
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left', framealpha=0.9)
     
-    # Format x-axis for readability
-    if len(x) > 20:
-        ax1.tick_params(axis='x', rotation=45)
-    
+    # Adjust layout
     plt.tight_layout()
     
+    # Save if requested
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Plot saved to: {save_path}")
     
-    #plt.show()
+    # Display statistics
+    print(f"Data points plotted: {len(time)}")
+    print(f"Time range: {time.min():.0f} - {time.max():.0f} years")
+    print(f"Volume range: {volume.min():.2f} - {volume.max():.2f} km³")
+    print(f"Extent range: {extent.min():.2f} - {extent.max():.2f} km²")
+    
+    return fig, (ax1, ax2)
+
+# Example usage:
+if __name__ == "__main__":
+    # Example usage with different time resolutions
+    
+    # Plot all data points
+    # fig, axes = plot_volume_extent_time('your_data.csv', time_resolution=1)
+    
+    # Plot every 10th data point for overview of 140k years
+    # fig, axes = plot_volume_extent_time('your_data.csv', time_resolution=10)
+    
+    # Plot every 50th data point with quadratic trend
+    # fig, axes = plot_volume_extent_time('your_data.csv', time_resolution=50, polynomial_degree=2)
+    
+    # Save the plot
+    # fig, axes = plot_volume_extent_time('your_data.csv', time_resolution=1, save_path='volume_extent_plot.png')
+    
+    plt.show()
