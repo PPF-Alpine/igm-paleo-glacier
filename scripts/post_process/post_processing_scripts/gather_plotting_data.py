@@ -1,8 +1,9 @@
+from pathlib import Path
 import geopandas as gpd
 import os
 import glob
 
-from get_ice_volume_array import get_ice_volume_with_path
+from .get_ice_volume_array import get_ice_volumes_with_path
 
 def save_results_as_csv(path_to_logfile: Path, shape_files_path: Path, output_folder: Path):
 

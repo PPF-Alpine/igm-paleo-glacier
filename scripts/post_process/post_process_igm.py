@@ -4,14 +4,15 @@ import re
 import argparse
 import rasterio
 import numpy as np
+from pathlib import Path
 from rasterio import features
 import geopandas as gpd
 from shapely.geometry import shape
 
 from post_processing_scripts import (
-    save_result_as_csv  
-    extract_outline_as_shapefile
-    plot_ice_extent_and_volume        
+    # save_result_as_csv, 
+    extract_outline_as_shapefile,
+    # plot_ice_extent_and_volume,     
 )
 
 def parse_arguments():
@@ -26,6 +27,7 @@ def parse_arguments():
     return parser.parse_args()
 
 def main():
+
     # Parse command line arguments
     args = parse_arguments()
     
@@ -34,6 +36,8 @@ def main():
     input_crs = args.input_crs
     threshold = float(args.threshold) if args.threshold is not None else 2
     target_crs = args.target_crs
+
+    print(f"Post Processing Started. Input: {args.input_folder}, output: {output_folder}, threshold: {threshold}")
     
     # Validate input folder
     if not os.path.isdir(input_folder):
@@ -55,3 +59,6 @@ def main():
     # Plot the results 
     # plot_ice_extent_and_volume()
 
+
+if __name__ == "__main__":
+    main()

@@ -156,7 +156,7 @@ mkdir "$result_folder/$TIF_OUTPUT_FOLDER"
 mkdir -p "$result_folder/ice_extent_shape_files"
 projection_file=$(cat "data/projection.txt")
 echo "The projection file reads $projection_file"
-python3 post_process_scripts/ice_thickness_outline_extractor.py -i "$result_folder/$TIF_OUTPUT_FOLDER" -o "$result_folder/ice_extent_shape_files" -c "$projection_file" -r "EPSG:4326" 
+python3 post_process_scripts/post_process_igm.py -i "$result_folder/$TIF_OUTPUT_FOLDER" -o "$result_folder/ice_extent_shape_files" -c "$projection_file" -r "EPSG:4326" 
 
 
 

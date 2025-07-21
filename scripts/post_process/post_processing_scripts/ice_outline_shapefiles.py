@@ -30,7 +30,7 @@ import glob
 import re
 import argparse
 import rasterio
-import Path
+from pathlib import Path
 import numpy as np
 from rasterio import features
 import geopandas as gpd
@@ -161,7 +161,7 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
 def extract_outline_as_shapefile(input_folder: Path, output_folder: Path, input_crs: str, target_crs: str, threshold = 2.0):
 
     ice_thinkness_file_name_pattern  = os.path.join(input_folder, "thk-*.tif")
-    files = glob(ice_thinkness_file_name_pattern)
+    files = glob.glob(ice_thinkness_file_name_pattern)
     
     if not files:
         print(f"No files matching the pattern 'thk-*.tif' found in {input_folder}")
