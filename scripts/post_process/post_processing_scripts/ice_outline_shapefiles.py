@@ -8,7 +8,7 @@ extracts outlines where ice exists (non-zero values), and saves them as shapefil
 for use in ArcGIS.
 
 Usage:
-    python script.py -i INPUT_FOLDER [-o OUTPUT_FOLDER] [-c CRS_EPSG]
+python script.py -i INPUT_FOLDER [-o OUTPUT_FOLDER] [-c CRS_EPSG]
 
 Examples:
     python script.py -i /path/to/tif/files
@@ -30,6 +30,7 @@ import glob
 import re
 import argparse
 import rasterio
+import Path
 import numpy as np
 from rasterio import features
 import geopandas as gpd
@@ -160,40 +161,12 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
     print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
     return total_area_km2 
 
-def parse_arguments():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Extract ice thickness outlines from GeoTIFF files.')
-    parser.add_argument('-i', '--input_folder', required=True, help='Input folder containing thk-*.tif files')
-    parser.add_argument('-o', '--output_folder', help='Output folder for shapefiles (defaults to input folder if not specified)')
-    parser.add_argument('-c', '--input_crs', required=True, help='Input CRS for data (e.g., "EPSG:32638")')
-    parser.add_argument('-t', '--threshold', type=float, help='Threshold value to remove low ice thickness values')
-    parser.add_argument('-r', '--target_crs', help='Target CRS for output shapefiles (default "EPSG:4326")')
-    
-    return parser.parse_args()
+def extract_outline_as_shapefile(input_folder: Path, output_folder: Path, input_crs: str, target_crs: str, threshold = 2.0):
 
-def main():
-    # Parse command line arguments
-    args = parse_arguments()
-    
-    input_folder = args.input_folder
-    output_folder = args.output_folder if args.output_folder else input_folder
-    input_crs = args.input_crs
-    threshold = float(args.threshold) if args.threshold is not None else 2
-    target_crs = args.target_crs
-    
     # Validate input folder
     if not os.path.isdir(input_folder):
         print(f"Error: {input_folder} is not a valid directory.")
         return
-    
-    # Create output folder if it doesn't exist
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-        print(f"Created output directory: {output_folder}")
-    
-    # Find all thk-*.tif files
-    pattern = os.path.join(input_folder, "thk-*.tif")
-    files = glob.glob(pattern)
     
     if not files:
         print(f"No files matching the pattern 'thk-*.tif' found in {input_folder}")
@@ -202,13 +175,6 @@ def main():
     print(f"Found {len(files)} files to process.")
     print(f"Target CRS: {target_crs if target_crs else 'Using CRS from input files'}")
 
-    #TODO: make an array here of ice extent in m^2 then plot it at and and save the plot
-    # ice extent m^2 is returned for each file under
-    # ice volume will be gotten from the get_ice_volume_array.py that will look up the log file.
-    # the plot_ice_extent_variables.py will take the two vars above as input and save a plot. 
-    # TODO: consicer having a "post_process.py" that calls the ice thinckness outline extractor etc
-
-    # Get extent area and volumes for plot
     total_time_steps  = len(files)
     ice_extent_areas = np.empty(total_time_steps)
     ice_volumes = get_ice_volumes_with_path(log_dir=os.path.join(input_folder, ".."))
@@ -244,5 +210,3 @@ def main():
     # Plot extent and volume through time 
     plot_ice_extent_and_volume(ice_extent_areas_sorted, ice_volumes=ice_volumes_sorted, time_data=years_sorted, save_path=output_folder)
 
-if __name__ == "__main__":
-    main()
