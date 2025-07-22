@@ -1,6 +1,11 @@
 # Paleo IGM post processing scripts
 
-## ice_thicness_outline_extractor.py
+## Overview
+This directory `post_process/` contains all the post processing scripts. A complete post processing can be done by calling the main `post_process_igm.py` script. Although this should already be executed by the run script that initiates the simulation.  
+
+The scripts in `post_process/post_processing_scripts/` should be mostly modular, and can be executed after a simulation has ended. Some script depend on being executed in order because it is using the output from the previous script (E.g. `ice_outline_shapefiles.py` provides output for `the gather_plotting_data.py` providing `.csv` files for `plot_result_data.py`).
+
+## ice_outline_shapefiles.py
 This script take all the ice thickness GeoTIFF-files (e.g. thk-001950.tif) in the specified folder, converts them to an outline shape file (set of files), and names them for the year. 
 
 > [!NOTE]
@@ -15,19 +20,5 @@ The script takes input parameters as command-line aguments:
 
 ### Example
 ```shell
-python3 ice_thicness_outline_extractor.py --input ../igm_run/simian_small_ethiopia/simian_small_ethiopia_result_1/ --output ./data/ --crs "EPSG:20138"
+python3 ice_outline_shapefiles.py --input ../igm_run/simian_small_ethiopia/simian_small_ethiopia_result_1/ --output ./data/ --crs "EPSG:20138"
 ```
-
-## Analysis
-The script `analysis/igm_perfomance_analysis.py` takes a `.xlsx` tabe named in the start of the script and looks for the columns:
-```python
-columns_to_use = ['location', 'area', 'spatial_resolution', 'temporal_resolution', 'simulated_years', 'hours']
-```
-
-Where location is the name of the location, area is the total area in km^3 of the bounding box and hours is the computation time of the simulation. The script perfoms a by variable comarative analysis and outputs plots for each. 
-
-
-
-This is all irrelevant now, This needs a big update.
-test
-
