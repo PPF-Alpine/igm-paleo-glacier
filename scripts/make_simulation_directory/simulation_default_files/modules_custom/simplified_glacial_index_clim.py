@@ -2,7 +2,7 @@
 
 # Copyright (C) 2021-2023 Guillaume Jouvet <guillaume.jouvet@unil.ch>
 # Published under the GNU GPL (Version 3), check at the LICENSE file
-# Adapted for paleo climate simulations by Abe Wiersma and Sjur Barndon
+# Adapted for paleo climate simulations by Sjur Barndon
 
 import numpy as np
 import os
@@ -103,8 +103,6 @@ def initialize(params, state):
     delta_T_data = delta_T_raw * params.polar_amplification_adjustment 
 
     time_data = np.squeeze(delta_temperature_signal.variables['time'][:])
-    state.delta_temperature_time_data = time_data
-
 
     # Get the LGM_precip_adjustment:
     state.pr_adj_LGM = params.LGM_precip_adjustment
@@ -127,8 +125,9 @@ def initialize(params, state):
     # Function to interpolate and set delta_T during update/simulation
     # simulation_time is state.t, left and right values will be used beyond the time series data.
     state.glacial_index_at_runtime = lambda simulation_time: np.interp(simulation_time, calendar_years, glacial_index, left=glacial_index[0], right=glacial_index[-1] ) 
-    delta_temperature_signal.close()
+    state.dT_at_runtime = lambda simulation_time: np.interp(simulation_time, calendar_years, delta_T_data, left=delta_T_data[0], right=delta_T_data[-1] )
 
+    delta_temperature_signal.close()
    
     # intitalize air_temp and precipitation fields. The final precipitation and temperature must have shape (12,ny,nx)
     number_months = 12
@@ -151,6 +150,7 @@ def update(params, state):
 
         try: 
             glacial_index_at_runtime = state.glacial_index_at_runtime(state.t.numpy())
+            delta_temperature_at_runtime = state.dT_at_runtime(state.t.numpy())
         except ValueError:
             logger.error("No more delta temperature data at this time value.")
             return
@@ -160,8 +160,8 @@ def update(params, state):
         # Compute the precipitation variable with the glacial index method: temperature = observed * (G + adjustment * (1-G)) 
         state.precipitation = tf.convert_to_tensor(state.prec_obs * (glacial_index_at_runtime + state.pr_adj_LGM *(1-glacial_index_at_runtime)), dtype="float32")
 
-        # Set the temperature variable (Adjustment factor is already added, TODO: consider moving it to here)
-        state.air_temp = tf.convert_to_tensor(state.temp_obs, dtype="float32")
+        # Set the temperature variable 
+        state.air_temp = tf.convert_to_tensor(state.temp_obs + delta_temperature_at_runtime, dtype="float32")
 
         # vertical correction (lapse rates)
         temp_corr_addi = params.temp_default_gradient * state.usurf
