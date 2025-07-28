@@ -8,6 +8,7 @@ import numpy as np
 import os
 import tensorflow as tf
 import time
+import logging
 from netCDF4 import Dataset
 from scipy.interpolate import interp1d
 import scipy.ndimage
@@ -68,7 +69,7 @@ def params(parser):
     type=float,
         default=1.0,
         help="Development scaling factor for temperature (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
-    )    
+)    
     parser.add_argument(
         "--temperature_addition",
         type=float,
@@ -84,13 +85,21 @@ def initialize(params, state):
     observed_atmosphere_time = np.squeeze(observed_atmosphere.variables["time"]).astype("float32") # unit: years, TODO:  this is a test
     observed_atmosphere.close()
 
+
+    print(f"Observed atmosphere shapes")
+    print(f"Observed preciptiation shapes: {observed_precipitation.shape}")
+    print(f"Observed temperature shapes: {observed_temperature.shape}")
+
     # Add the temperature data to the state
     state.temp_obs = (observed_temperature + params.temperature_addition) * params.temperature_scaling # Optional scaling/addition for testing
 
     # Add the precipitation data to the state
     # fix the units of precipitation, IGM expects kg * m^(-2) * y^(-1) instead of kg * m^(-2) * month^(-1)
     # The CHELSA data for precipitation is in monthly *amount*, not a rate. So it is correct to sum the months:
-    state.prec_obs = observed_precipitation.sum(axis=0) * params.precipitation_scaling # Optional scaling for testing
+    # state.prec_obs = observed_precipitation.sum(axis=0) * params.precipitation_scaling # Optional scaling for testing
+
+    # Skipping the above commented out sumation of the months to yearly.
+    state.prec_obs =  observed_precipitation * params.precipitation_scaling 
 
     # Load the paleo climate temperature series
     # Either (1) EPICA signal from the dT_epica.nc file, or (2) the Latitudinally weighted core composites.
@@ -143,6 +152,11 @@ def initialize(params, state):
     state.tlast_clim_oggm = tf.Variable(-(10**10), dtype="float32", trainable=False)
     state.tcomp_clim_oggm = []
 
+    # List all loggers after importing IGM
+    # print("THIS IS HERE")
+    # for name in logging.root.manager.loggerDict:
+    #     print(name)
+
 def update(params, state):
     if (state.t - state.tlast_clim_oggm) >= params.paleo_clim_update_freq:
         if hasattr(state, "logger"):
@@ -164,7 +178,8 @@ def update(params, state):
         state.air_temp = tf.convert_to_tensor(state.temp_obs + delta_temperature_at_runtime, dtype="float32")
 
         # vertical correction (lapse rates)
-        temp_corr_addi = params.temp_default_gradient * state.usurf
+        # temp_corr_addi = params.temp_default_gradient * state.usurf
+        temp_corr_addi = params.temp_default_gradient * state.thk
         temp_corr_addi = tf.expand_dims(temp_corr_addi, axis=0)
         temp_corr_addi = tf.tile(temp_corr_addi, (12, 1, 1))
 
@@ -173,6 +188,12 @@ def update(params, state):
 
         state.meanprec = tf.math.reduce_mean(state.precipitation, axis=0)
         state.meantemp = tf.math.reduce_mean(state.air_temp, axis=0)
+
+        # Debug prints
+        # print(f"meanprec shape: {state.meanprec.shape}, dtype: {state.meanprec.dtype}")
+        # print(f"meantemp shape: {state.meantemp.shape}, dtype: {state.meantemp.dtype}")
+        # print(f"precipitation shape: {state.precipitation.shape}")
+        # print(f"air_temp shape: {state.air_temp.shape}")
 
         # TODO: convert temperature and precipitation resulting data to correct output format for netcdf file for validation:
         # ValueError: cannot reshape array of size 4095300 into shape (1,10,365,935)

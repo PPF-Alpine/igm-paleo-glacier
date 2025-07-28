@@ -163,7 +163,7 @@ python3 post_process_scripts/post_process_igm.py -i "$result_folder/$TIF_OUTPUT_
 # Backup all the data to external storage. 
 if [ SYNC_TO_EXTERNAL_BACKUP ]; then
     mkdir -p "$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
-    rsync -vharP --log-file="$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/backup_progress.log" "$result_folder/" "$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
+    rsync -harP --log-file="$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/backup_progress.log" "$result_folder/" "$EXTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
 
 
 else 
@@ -173,7 +173,7 @@ fi
 if [ SYNC_TO_INTERNAL_BACKUP ]; then
     # Move result folder to internal storage and create a symlink for easy access
     mkdir -p "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
-    rsync -vharP --log-file="$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/file_transfer.log" "$result_folder/" "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
+    rsync -harP --log-file="$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/file_transfer.log" "$result_folder/" "$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder"
 
     log_file="$INTERNAL_STORAGE_PATH/$base_result_folder/$remote_result_folder/${result_folder}.log"  # Update path for continued logging
     echo "Copied (rsync) files to interal storage:  $INTERNAL_STORAGE_PATH/$base_result_folder/$result_folder" | tee -a "$log_file"

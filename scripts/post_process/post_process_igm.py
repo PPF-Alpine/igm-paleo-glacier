@@ -50,14 +50,18 @@ def main():
         print(f"Created output directory: {output_folder}")
 
 
+    #TODO: fix path names to this local place in stead of inside the scripts so that they can be printed correctly here.
     # Generate shape files from the igm outputs
     extract_outline_as_shapefile(input_folder, output_folder, input_crs, target_crs, threshold)
+    print(f"Ice extent outline extracted as shapefiles to {output_folder}")
 
     # Extract the result data for extent and volume and create a csv file 
     save_results_as_csv(path_to_logfile=os.path.join(input_folder, ".."), shape_files_path=output_folder, output_folder=os.path.join(input_folder, ".."))
+    print(f"Result statistics saved to CSV in {output_folder}")
 
     # Plot the results 
     plot_volume_extent_time(os.path.join(input_folder, "../glacier_extent_and_volume.csv"), save_path=os.path.join(input_folder, ".."))
+    print(f"Result volume and extent plotted and saved in {input_folder}")
 
 
 if __name__ == "__main__":

@@ -15,9 +15,9 @@ def save_results_as_csv(path_to_logfile: Path, shape_files_path: Path, output_fo
     years, ice_volume_array = get_ice_volumes_with_path(path_to_logfile)
 
 
-    print(f"ext: {extent_area_and_time}")
-    print(f"vol: {ice_volume_array}")
-    print(f"yer: {years}")
+    # print(f"ext: {extent_area_and_time}")
+    # print(f"vol: {ice_volume_array}")
+    # print(f"yer: {years}")
 
     # Create pandas DataFrame and combine the two data sets
     volume_df = pd.DataFrame({
@@ -72,7 +72,7 @@ def extract_shapefile_data(folder_path):
             total_area = gdf['area_km2'].sum()
             
             results.append((filename, year, total_area))
-            print(f"Processed {filename}: Year {year}, Total Area {total_area:.2f} km²")
+            # print(f"Processed {filename}: Year {year}, Total Area {total_area:.2f} km²")
             
         except Exception as e:
             print(f"Error processing {shp_file}: {e}")

@@ -101,7 +101,7 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
         print(f"Couldn't extract year from {base_name}. Skipping...")
         return
     
-    print(f"Processing {base_name} (Year: {year_string})...")
+    # print(f"Processing {base_name} (Year: {year_string})...")
     
     # Open the raster file
     with rasterio.open(file_path) as raster_file:
@@ -109,7 +109,7 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
         raster_data = raster_file.read(1)
         
         # Create a mask where ice thickness > threshold value
-        print(f"Processing raster file with the ice thinckness threshold of {threshold}")
+        # print(f"Processing raster file with the ice thinckness threshold of {threshold}")
         ice_mask = (raster_data > threshold) & (raster_data != raster_file.nodata)
 
         # Use the original data values, but set areas below threshold to 0
@@ -141,12 +141,12 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
 
     total_area_m2 = gdf['area_m2'].sum()
     total_area_km2 = gdf['area_km2'].sum()
-    print(f"Total area of ice extent is {total_area_m2} m^2 and {total_area_km2} km^2")
     gdf = gdf.drop(columns=['area_m2'])
+    # print(f"Total area of ice extent is {total_area_m2} m^2 and {total_area_km2} km^2")
     
     # Reproject to target_crs if specified and different from source
     if target_crs and (target_crs != input_crs):
-        print(f"Reprojecting from {input_crs} to {target_crs}...")
+        #print(f"Reprojecting from {input_crs} to {target_crs}...")
         gdf = gdf.to_crs(target_crs)
 
     # Create output filename
@@ -155,8 +155,8 @@ def process_tif_file(file_path, output_folder, input_crs, threshold=2, target_cr
     
     # Save as shapefile, explicitly setting the CRS
     gdf.to_file(output_path, driver="ESRI Shapefile")
-    print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
-    print(" ")
+    # print(f"Saved outline to {output_path} with CRS: {gdf.crs}")
+    # print(" ")
 
 def extract_outline_as_shapefile(input_folder: Path, output_folder: Path, input_crs: str, target_crs: str, threshold = 2.0):
 
