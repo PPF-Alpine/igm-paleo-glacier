@@ -58,14 +58,22 @@ def params(parser):
     parser.add_argument(
         "--smb_accpdd_melt_factor_snow",
         type=float,
-        default=0.003 * 365.242198781,
+        # default=0.003 * 365.242198781,
+        default=1.387,
         help="Degree-day factor for snow (water eq.) (unit: meter / (Kelvin year))",
     )
     parser.add_argument(
         "--smb_accpdd_melt_factor_ice",
         type=float,
-        default=0.008 * 365.242198781,
+        # default=0.008 * 365.242198781,
+        default=2.701,
         help="Degree-day factor for ice (water eq.) (unit: meter / (Kelvin year))",
+    )
+    parser.add_argument(
+        "--smb_melt_factors_calibration",
+        type=float,
+        default=1,
+        help="Factor to change both melt factor for ice and snow by the same percentage value."
     )
     parser.add_argument(
         "--smb_accpdd_shift_hydro_year",
@@ -86,6 +94,9 @@ def initialize(params, state):
 
     params.thr_temp_snow = params.smb_temp_solid_precipitation
     params.thr_temp_rain = params.smb_temp_liquid_precipitation
+
+    params.smb_accpdd_melt_factor_snow *= params.smb_melt_factors_calibration
+    params.smb_accpdd_melt_factor_ice *= params.smb_melt_factors_calibration
 
 
 def update(params, state):

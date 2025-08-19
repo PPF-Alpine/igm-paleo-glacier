@@ -80,15 +80,14 @@ def params(parser):
 def initialize(params, state):
     # Load climate data from netcdf file present_day_observation_atmosphere.nc
     observed_atmosphere = Dataset( os.path.join("./data/", params.obs_atmosphere_file))
+    observed_elevation = np.squeeze(observed_atmosphere.variables["elevation"]).astype("float32")  # CHELSA Elevation that includes present day ice elevation.
     observed_precipitation = np.squeeze(observed_atmosphere.variables["precipitation"]).astype("float32")  # unit : kg * m^(-2) * month^(-1)
     observed_temperature= np.squeeze(observed_atmosphere.variables["air_temp"]).astype("float32")  # unit : degree Celsius
     observed_atmosphere_time = np.squeeze(observed_atmosphere.variables["time"]).astype("float32") # unit: years, TODO:  this is a test
     observed_atmosphere.close()
 
-
-    print(f"Observed atmosphere shapes")
-    print(f"Observed preciptiation shapes: {observed_precipitation.shape}")
-    print(f"Observed temperature shapes: {observed_temperature.shape}")
+    # Add chelsa elvation to state
+    state.observed_elevation = observed_elevation
 
     # Add the temperature data to the state
     state.temp_obs = (observed_temperature + params.temperature_addition) * params.temperature_scaling # Optional scaling/addition for testing
@@ -179,7 +178,8 @@ def update(params, state):
 
         # vertical correction (lapse rates)
         # temp_corr_addi = params.temp_default_gradient * state.usurf
-        temp_corr_addi = params.temp_default_gradient * state.thk
+        # temp_corr_addi = params.temp_default_gradient * state.thk
+        temp_corr_addi = params.temp_default_gradient * (state.usurf - state.observed_elevation)
         temp_corr_addi = tf.expand_dims(temp_corr_addi, axis=0)
         temp_corr_addi = tf.tile(temp_corr_addi, (12, 1, 1))
 
