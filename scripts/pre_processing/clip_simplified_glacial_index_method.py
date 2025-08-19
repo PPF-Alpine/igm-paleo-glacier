@@ -51,6 +51,7 @@ def convert_epica_to_netcdf(args: argparse.Namespace):
         epica_to_netcdf(
             epica_dir=Path(CLIMATE_DATA_PATH / "epica"), 
             output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.dT_epica_filename),
+            polar_amplification_factor=args.polar_amplification,
         )
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:
