@@ -51,7 +51,6 @@ def convert_epica_to_netcdf(args: argparse.Namespace):
         epica_to_netcdf(
             epica_dir=Path(CLIMATE_DATA_PATH / "epica"), 
             output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.dT_epica_filename),
-            polar_amplification_factor=args.polar_amplification,
         )
 
 def check_args(args: argparse.Namespace) -> argparse.Namespace:
@@ -106,12 +105,6 @@ if __name__ == "__main__":
         "--resolution", help="Resolution in meters per pixel", 
         type=int, 
         default=1000,
-    )
-    parser.add_argument(
-        "--polar_amplification", 
-        help="The adjusment facor for polar amplification, defaults to 0.5", 
-        type=float, 
-        default=0.5,
     )
     parser.add_argument(
         "--dT_epica_filename",
