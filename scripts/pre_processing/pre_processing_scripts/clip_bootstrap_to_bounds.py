@@ -1,6 +1,7 @@
 from pathlib import Path
 import xarray as xr
 from time import perf_counter
+import numpy as np
 
 from .clip_bounds_and_reproject import clip_and_reproject_data_array 
 
@@ -24,13 +25,27 @@ def save_clipped_bootstrap(
         resolution (int): The resolution of the output data array.
     """
     # Create xarray and save to netcdf
+    gebco_da = create_cliped_bootstrap(gebco_filepath, crs, bounds, resolution)
 
-    xr.Dataset(
-        {"topg": create_cliped_bootstrap(gebco_filepath, crs, bounds, resolution)}
-    ).to_netcdf(
+    if '_FillValue' in gebco_da.attrs:
+        del gebco_da.attrs['_FillValue']
+    if 'missing_value' in gebco_da.attrs:
+        del gebco_da.attrs['missing_value']
+
+    
+    # **Explicitly set encoding to force integer format**
+    encoding = {
+        'topg': {
+            'dtype': 'int16',
+            '_FillValue': -32767,
+        }
+    }
+    
+    # Create xarray and save to netcdf with explicit encoding
+    xr.Dataset({"topg": gebco_da}).to_netcdf(
         output_filepath,
+        encoding=encoding
     )
-
 
 def create_cliped_bootstrap(
     gebco_path: Path, crs: str, bounds: list[int], resolution: int
@@ -47,17 +62,23 @@ def create_cliped_bootstrap(
     Returns:
         xr.DataArray: The reprojected and clipped data array.
     """
-
+    
     start = perf_counter()
-    gebco_da = clip_and_reproject_data_array(
-        # open the data array and set the CRS to WGS84
-        xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs(
-            "WGS84"
-        ),
-        crs,
-        bounds,
-        resolution,
-    )
+
+    loaded_da = xr.open_dataarray(gebco_path, decode_coords="all", decode_cf=True).rio.write_crs("WGS84")
+    gebco_da = clip_and_reproject_data_array(loaded_da, crs, bounds, resolution)
+
+   # **FORCE to int16 and handle any edge cases**
+    print(f"Before conversion - Data type: {gebco_da.dtype}")
+    
+    # Convert to int16, replacing any potential NaN/inf with NoData
+    gebco_da = gebco_da.fillna(-32767)  # Handle any NaN
+    gebco_da = gebco_da.where(~np.isinf(gebco_da), -32767)  # Handle any inf values
+    gebco_da = gebco_da.astype('int16')  # Force to int16
+    
+    print(f"After conversion - Data type: {gebco_da.dtype}")
+    print(f"Final data range: {gebco_da.min().values} to {gebco_da.max().values}")
+    
     gebco_da.attrs.update(standard_name="bedrock_altitude")
     logger.info(
         f"Loading and clipping GEBCO took {perf_counter() - start:.2f} seconds."

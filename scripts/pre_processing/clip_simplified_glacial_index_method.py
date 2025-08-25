@@ -32,7 +32,7 @@ def clip_data(args: argparse.Namespace):
     save_clipped_bootstrap(
         crs=args.crs,
         bounds=args.bounds,
-        gebco_filepath=(CLIMATE_DATA_PATH / "gebco/GEBCO_2023_sub_ice_topo.nc"),
+        gebco_filepath=(CLIMATE_DATA_PATH / "gebco/gebco_ice_subtracted.nc"),
         output_filepath=(LOCATION_BASE_PATH / args.output_dir / args.boot_output_filename),
         resolution=args.resolution,
     )

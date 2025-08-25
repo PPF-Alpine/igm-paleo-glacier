@@ -6,6 +6,7 @@ import tempfile
 
 GEBCO_URL = (
     "https://www.bodc.ac.uk/data/open_download/gebco/gebco_2023_sub_ice_topo/zip/"
+        "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2024/ice_surface_elevation/netcdf/GEBCO_2024_CF.nc"
 )
 
 
