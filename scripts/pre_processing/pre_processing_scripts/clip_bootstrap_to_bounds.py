@@ -24,9 +24,12 @@ def save_clipped_bootstrap(
         output_filepath (Path): The path to save the netCDF file to.
         resolution (int): The resolution of the output data array.
     """
-    # Create xarray and save to netcdf
+
+    # Preload GEBCO 2025 data: 
     gebco_da = create_cliped_bootstrap(gebco_filepath, crs, bounds, resolution)
 
+
+    # Remove the fill values and missing values attibutes to set the enconding later
     if '_FillValue' in gebco_da.attrs:
         del gebco_da.attrs['_FillValue']
     if 'missing_value' in gebco_da.attrs:

@@ -30,6 +30,7 @@
   "time_save": 1000.0,
   "LGM_precip_adjustment" : 0.5,
   "polar_amplification_adjustment" : 0.5,
+  "temp_default_gradient" : 0.005,
   "precipitation_scaling": 1,
   "temperature_scaling": 1 
 }

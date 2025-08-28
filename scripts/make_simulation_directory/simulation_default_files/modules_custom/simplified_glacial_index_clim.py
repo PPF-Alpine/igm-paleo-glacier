@@ -68,13 +68,13 @@ def params(parser):
         "--temperature_scaling",
     type=float,
         default=1.0,
-        help="Development scaling factor for temperature (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
+        help="Development parameter:  scaling factor for temperature (e.g., 0.5 for 50% reduction, 1.5 for 50% increase)",
 )    
     parser.add_argument(
         "--temperature_addition",
         type=float,
         default=0.0,
-        help="Development temperature additon (e.g., 5 for 5 degrees warming)",
+        help="Development parameter: temperature additon (e.g., 5 for 5 degrees warming)",
     )
 
 def initialize(params, state):
