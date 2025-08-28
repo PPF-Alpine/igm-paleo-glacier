@@ -5,7 +5,6 @@ from download_scripts import (
     download_and_extract_gebco,
     download_and_extract_pbcor,
     download_epica,
-    epica_to_netcdf,
     #TODO: add download core composites and climate models
 )
 
