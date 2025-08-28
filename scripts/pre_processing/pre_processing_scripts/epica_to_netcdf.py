@@ -36,13 +36,22 @@ def epica_to_netcdf(epica_dir: Path, output_filepath: Path, plot=False):
     temperatures = [temp for _, temp in data]
 
     # Extract yearly temperature data by interpolating the temperature at each year
-    d_t_range = np.arange(-130000, -38)
+    # The last year of valid EPICA temperature data is 1950-38 (1912).
+    epica_range = np.arange(-130000, -38)  # Valid EPICA data range
+    zero_range = np.arange(-38, 51)  # Years 1912-2000 where delta_T should be zero
+    d_t_range = np.arange(-130000, 51)  # Full range including year 2000
 
-    # Create an interpolation function
-    interp_func = interp1d(times, temperatures, kind='linear', fill_value="extrapolate")
+    # Create an interpolation function for valid EPICA data
+    interp_func = interp1d(times, temperatures, kind='linear', bounds_error=False, fill_value=np.nan)
 
-    # Interpolate the temperature at the given time using vectorized approach
-    delta_T = interp_func(d_t_range)
+    # Interpolate the temperature for the valid EPICA range
+    epica_delta_T = interp_func(epica_range)
+    
+    # Create zero values for years after 1912
+    zero_delta_T = np.zeros(len(zero_range))
+    
+    # Combine interpolated EPICA data with zero values
+    delta_T = np.concatenate([epica_delta_T, zero_delta_T])
 
     # Create xray Dataset
     logger.info("Creating xarray Dataset from numpy array.")
